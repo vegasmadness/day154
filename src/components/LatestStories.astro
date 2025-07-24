@@ -1,0 +1,281 @@
+---
+import { getCollection } from 'astro:content';
+import BlogCard from './BlogCard.astro';
+
+// Get latest blog posts (excluding the first 3 which are featured)
+const allPosts = await getCollection('blog', ({ data }) => {
+  return !data.draft;
+});
+
+// Sort posts by date (newest first) and skip first 3 (already featured)
+const latestPosts = allPosts
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(3, 9); // Get next 6 posts for asymmetric layout
+
+// If we don't have enough posts, show what we have
+const hasLatestPosts = latestPosts.length > 0;
+---
+
+<section class="py-16 md:py-20 lg:py-24 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header with Left-Aligned Underline Accent -->
+    <div class="mb-12 md:mb-16">
+      <h2 class="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+        Latest Stories
+      </h2>
+      <!-- Left-aligned underline accent (StoryHub style) -->
+      <div class="w-16 h-1 bg-primary-500 rounded-full mb-4"></div>
+      <p class="text-lg md:text-xl text-gray-600 max-w-2xl">
+        Fresh insights and stories from our latest adventures in web development, design, and technology.
+      </p>
+    </div>
+    
+    <!-- Asymmetric 2-Column Grid Layout -->
+    {hasLatestPosts ? (
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+        {latestPosts.map((post, index) => {
+        // Create asymmetric layout patterns
+        const isLargeCard = index % 3 === 0; // Every 3rd card is large
+        const isWideCard = index % 4 === 1; // Every 4th card (offset) is wide
+        
+        // Define grid column spans for asymmetric layout
+        let colSpan = 'lg:col-span-4'; // Default: 1/3 width
+        let cardVariant = 'default';
+        
+        if (isLargeCard) {
+          colSpan = 'lg:col-span-8'; // Large card: 2/3 width
+          cardVariant = 'large';
+        } else if (isWideCard) {
+          colSpan = 'lg:col-span-6'; // Wide card: 1/2 width
+          cardVariant = 'wide';
+        }
+        
+        return (
+          <div class={`${colSpan} ${cardVariant === 'large' ? 'lg:row-span-1' : ''}`}>
+            {cardVariant === 'large' ? (
+              <!-- Large Card Variation -->
+              <article class="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden h-full">
+                <!-- Large Featured Image -->
+                {post.data.heroImage && (
+                  <div class="relative overflow-hidden">
+                    <img 
+                      src={post.data.heroImage} 
+                      alt={post.data.title}
+                      class="w-full h-64 md:h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <!-- Gradient overlay for better text readability -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                    
+                    <!-- Large card badge -->
+                    <div class="absolute top-6 left-6">
+                      <span class="bg-accent-purple text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                        Editor's Pick
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                <!-- Large Card Content -->
+                <div class="p-8">
+                  <!-- Meta Information -->
+                  <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {new Intl.DateTimeFormat('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }).format(post.data.pubDate)}
+                    </time>
+                    <span>•</span>
+                    <span>{Math.ceil(post.body.split(/\s+/).length / 200)} min read</span>
+                  </div>
+                  
+                  <!-- Tags -->
+                  {post.data.tags && post.data.tags.length > 0 && (
+                    <div class="flex flex-wrap gap-2 mb-6">
+                      {post.data.tags.slice(0, 4).map((tag, tagIndex) => {
+                        const tagColors = [
+                          'bg-primary-500 text-white',
+                          'bg-accent-blue text-white',
+                          'bg-accent-green text-white',
+                          'bg-accent-purple text-white',
+                        ];
+                        return (
+                          <span 
+                            class={`px-3 py-1 rounded-full text-sm font-medium ${tagColors[tagIndex % tagColors.length]}`}
+                          >
+                            #{tag}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  <!-- Large Title -->
+                  <h3 class="font-heading font-bold text-2xl md:text-3xl lg:text-4xl text-gray-900 mb-4 group-hover:text-primary-600 transition-colors duration-200 leading-tight">
+                    {post.data.title}
+                  </h3>
+                  
+                  <!-- Extended Description -->
+                  <p class="text-gray-600 leading-relaxed mb-6 text-lg line-clamp-4">
+                    {post.data.description}
+                  </p>
+                  
+                  <!-- Read More Link -->
+                  <a 
+                    href={`/blog/${post.slug}`}
+                    class="inline-flex items-center gap-2 text-primary-500 hover:text-primary-600 font-semibold text-lg transition-colors duration-200 group/link"
+                    aria-label={`Read more about ${post.data.title}`}
+                  >
+                    Read Full Story
+                    <svg 
+                      class="w-5 h-5 group-hover/link:translate-x-1 transition-transform duration-200" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            ) : (
+              <!-- Standard/Wide Card Variation -->
+              <BlogCard 
+                post={post} 
+                className={`h-full ${cardVariant === 'wide' ? 'wide-card' : 'standard-card'}`}
+              />
+            )}
+          </div>
+        );
+        })}
+      </div>
+    ) : (
+      <!-- No posts available message -->
+      <div class="text-center py-12">
+        <div class="max-w-md mx-auto">
+          <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">More Stories Coming Soon</h3>
+          <p class="text-gray-600">We're working on bringing you more engaging content. Check back soon!</p>
+        </div>
+      </div>
+    )}
+    
+    <!-- View More Stories Link -->
+    <div class="text-center mt-12 md:mt-16">
+      <a 
+        href="/blog" 
+        class="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
+        aria-label="View all blog stories"
+      >
+        Explore All Stories
+        <svg 
+          class="w-5 h-5" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Line clamp utilities */
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-4 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Asymmetric grid enhancements */
+  .grid {
+    align-items: start;
+  }
+  
+  /* Enhanced hover effects for large cards */
+  .group:hover {
+    transform: translateY(-8px);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 1023px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .grid > div {
+      grid-column: span 1 !important;
+    }
+  }
+  
+  /* Card variant specific styles */
+  .wide-card {
+    /* Additional styling for wide cards if needed */
+  }
+  
+  .standard-card {
+    /* Additional styling for standard cards if needed */
+  }
+  
+  /* Enhanced section styling */
+  section {
+    position: relative;
+  }
+  
+  /* Subtle background pattern */
+  section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  
+  /* Smooth transitions for all interactive elements */
+  article {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Focus styles for accessibility */
+  article:focus-within {
+    outline: 2px solid #ec4899;
+    outline-offset: 2px;
+  }
+  
+  /* Grid gap adjustments for better visual hierarchy */
+  @media (min-width: 1024px) {
+    .grid {
+      gap: 2rem;
+    }
+  }
+  
+  /* Enhanced shadow effects */
+  .group:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  }
+</style>
+</content>
+</invoke>

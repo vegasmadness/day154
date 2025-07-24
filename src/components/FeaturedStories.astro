@@ -1,0 +1,104 @@
+---
+import { getCollection } from 'astro:content';
+import BlogCard from './BlogCard.astro';
+
+// Get featured blog posts (first 3 published posts)
+const allPosts = await getCollection('blog', ({ data }) => {
+  return !data.draft;
+});
+
+// Sort posts by date (newest first) and take first 3 for featured
+const featuredPosts = allPosts
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+---
+
+<section class="py-16 md:py-20 lg:py-24 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header with Left-Aligned Underline Accent -->
+    <div class="mb-12 md:mb-16">
+      <h2 class="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+        Featured Stories
+      </h2>
+      <!-- Left-aligned underline accent (StoryHub style) -->
+      <div class="w-16 h-1 bg-primary-500 rounded-full mb-4"></div>
+      <p class="text-lg md:text-xl text-gray-600 max-w-2xl">
+        Discover our latest insights, tutorials, and creative content that keeps you engaged and inspired.
+      </p>
+    </div>
+    
+    <!-- 3-Column Equal Grid Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      {featuredPosts.map((post) => (
+        <BlogCard 
+          post={post} 
+          featured={true}
+          className="h-full"
+        />
+      ))}
+    </div>
+    
+    <!-- Optional: View All Stories Link -->
+    <div class="text-center mt-12 md:mt-16">
+      <a 
+        href="/blog" 
+        class="inline-flex items-center gap-2 text-primary-500 hover:text-primary-600 font-semibold text-lg transition-colors duration-200 group"
+        aria-label="View all blog stories"
+      >
+        View All Stories
+        <svg 
+          class="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Ensure equal height cards in the grid */
+  .grid > * {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Responsive grid adjustments */
+  @media (max-width: 767px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  /* Enhanced section styling */
+  section {
+    position: relative;
+  }
+  
+  /* Subtle background decoration */
+  section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+  }
+</style>

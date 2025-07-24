@@ -1,0 +1,145 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  featured?: boolean;
+  className?: string;
+}
+
+const { post, featured = false, className = '' } = Astro.props;
+const { title, description, pubDate, heroImage, tags } = post.data;
+
+// Calculate reading time (rough estimate: 200 words per minute)
+const content = post.body;
+const wordCount = content.split(/\s+/).length;
+const readingTime = Math.ceil(wordCount / 200);
+
+// Format date
+const formattedDate = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+}).format(pubDate);
+
+// Tag colors for visual variety
+const tagColors = [
+  'bg-primary-500 text-white',
+  'bg-accent-blue text-white',
+  'bg-accent-green text-white',
+  'bg-accent-purple text-white',
+  'bg-gray-700 text-white',
+];
+
+const getTagColor = (index: number) => tagColors[index % tagColors.length];
+---
+
+<article class={`group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden ${featured ? 'md:col-span-2 lg:col-span-1' : ''} ${className}`}>
+  <!-- Featured Image -->
+  {heroImage && (
+    <div class="relative overflow-hidden">
+      <img 
+        src={heroImage} 
+        alt={title}
+        class="w-full h-48 md:h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+        loading="lazy"
+      />
+      {featured && (
+        <div class="absolute top-4 left-4">
+          <span class="bg-primary-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+            Featured
+          </span>
+        </div>
+      )}
+    </div>
+  )}
+  
+  <!-- Card Content -->
+  <div class="p-6">
+    <!-- Meta Information -->
+    <div class="flex items-center gap-3 text-sm text-gray-500 mb-3">
+      <time datetime={pubDate.toISOString()}>
+        {formattedDate}
+      </time>
+      <span>•</span>
+      <span>{readingTime} min read</span>
+    </div>
+    
+    <!-- Tags -->
+    {tags && tags.length > 0 && (
+      <div class="flex flex-wrap gap-2 mb-4">
+        {tags.slice(0, 3).map((tag, index) => (
+          <span 
+            class={`px-3 py-1 rounded-full text-xs font-medium ${getTagColor(index)}`}
+          >
+            #{tag}
+          </span>
+        ))}
+        {tags.length > 3 && (
+          <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            +{tags.length - 3} more
+          </span>
+        )}
+      </div>
+    )}
+    
+    <!-- Title -->
+    <h3 class="font-heading font-bold text-xl md:text-2xl text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-200">
+      {title}
+    </h3>
+    
+    <!-- Description/Excerpt -->
+    <p class="text-gray-600 leading-relaxed mb-4 line-clamp-3">
+      {description}
+    </p>
+    
+    <!-- Read More Link -->
+    <a 
+      href={`/blog/${post.slug}`}
+      class="inline-flex items-center gap-2 text-primary-500 hover:text-primary-600 font-medium transition-colors duration-200 group/link"
+      aria-label={`Read more about ${title}`}
+    >
+      Read More
+      <svg 
+        class="w-4 h-4 group-hover/link:translate-x-1 transition-transform duration-200" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg>
+    </a>
+  </div>
+</article>
+
+<style>
+  /* Line clamp utility for description */
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Enhanced hover effects */
+  .group:hover {
+    transform: translateY(-4px);
+  }
+  
+  /* Smooth transitions for all interactive elements */
+  article {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Focus styles for accessibility */
+  article:focus-within {
+    outline: 2px solid #ec4899;
+    outline-offset: 2px;
+  }
+  
+  /* Enhanced shadow on hover */
+  .group:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+</style>
