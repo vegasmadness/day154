@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../../utils/supabase';
+import type { User } from '@supabase/supabase-js';
 
 interface LikeButtonProps {
   postId: string;
@@ -11,39 +13,115 @@ export default function LikeButton({ postId, initialLikes = 0 }: LikeButtonProps
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load like state from localStorage on component mount
+  // Load like state from Supabase on component mount
   useEffect(() => {
-    try {
-      const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
-      const postLikes = parseInt(localStorage.getItem(`likes_${postId}`) || initialLikes.toString());
-      
-      setHasLiked(likedPosts[postId] === true);
-      setLikes(postLikes);
-      setIsLoaded(true);
-    } catch (error) {
-      console.error('Error loading like state:', error);
-      setIsLoaded(true);
+    async function loadLikeState() {
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Get post stats (like count)
+        const { data: statsData, error: statsError } = await supabase
+          .rpc('get_post_stats', { post_uuid: postId });
+        
+        if (statsError) {
+          console.error('Error fetching post stats:', statsError);
+          setLikes(initialLikes);
+        } else if (statsData && statsData.length > 0) {
+          setLikes(statsData[0].like_count);
+        } else {
+          setLikes(initialLikes);
+        }
+        
+        // Check if user has liked this post (only if authenticated)
+        if (user) {
+          const { data: hasLikedData, error: hasLikedError } = await supabase
+            .rpc('user_has_liked_post', { 
+              post_uuid: postId, 
+              user_uuid: user.id 
+            });
+          
+          if (hasLikedError) {
+            console.error('Error checking like status:', hasLikedError);
+            setHasLiked(false);
+          } else {
+            setHasLiked(hasLikedData || false);
+          }
+        } else {
+          // For anonymous users, check localStorage as fallback
+          const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+          setHasLiked(likedPosts[postId] === true);
+        }
+        
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Error loading like state:', error);
+        setLikes(initialLikes);
+        setIsLoaded(true);
+      }
     }
+    
+    loadLikeState();
   }, [postId, initialLikes]);
 
   // Handle like button click
-  const handleLike = () => {
+  const handleLike = async () => {
     // Prevent multiple likes per user per post
     if (hasLiked || isAnimating) return;
 
     try {
-      // Optimistic UI update
-      const newLikes = likes + 1;
-      setLikes(newLikes);
-      setHasLiked(true);
       setIsAnimating(true);
-
-      // Persist to localStorage
-      const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
-      likedPosts[postId] = true;
-      localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
-      localStorage.setItem(`likes_${postId}`, newLikes.toString());
-
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Authenticated user - use Supabase
+        const { data: toggleResult, error: toggleError } = await supabase
+          .rpc('toggle_post_like', { post_uuid: postId });
+        
+        if (toggleError) {
+          console.error('Error toggling like:', toggleError);
+          setIsAnimating(false);
+          return;
+        }
+        
+        // Update UI based on toggle result
+        if (toggleResult) {
+          // Like was added
+          setLikes(prev => prev + 1);
+          setHasLiked(true);
+        } else {
+          // Like was removed (shouldn't happen in this flow, but handle it)
+          setLikes(prev => Math.max(0, prev - 1));
+          setHasLiked(false);
+        }
+      } else {
+        // Anonymous user - use localStorage and insert anonymous like
+        const { error: insertError } = await supabase
+          .from('likes')
+          .insert({
+            post_id: postId,
+            user_id: null,
+            ip_address: null // Could be populated server-side if needed
+          });
+        
+        if (insertError) {
+          console.error('Error inserting anonymous like:', insertError);
+          setIsAnimating(false);
+          return;
+        }
+        
+        // Update UI and localStorage
+        setLikes(prev => prev + 1);
+        setHasLiked(true);
+        
+        // Store in localStorage to prevent multiple anonymous likes
+        const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+        likedPosts[postId] = true;
+        localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+      }
+      
       // Reset animation after completion
       setTimeout(() => {
         setIsAnimating(false);

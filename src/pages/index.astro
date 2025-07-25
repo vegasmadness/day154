@@ -1,13 +1,41 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import FeaturedStories from "../components/FeaturedStories.astro";
-import LatestStories from "../components/LatestStories.astro";
+import { formatDate } from '../utils/formatDate';
+import { supabase } from '../utils/supabase';
+
+// Get all published blog posts from Supabase
+const { data: allPosts, error } = await supabase
+  .from('posts')
+  .select('*')
+  .eq('is_draft', false)
+  .order('published_at', { ascending: false });
+
+if (error) {
+  console.error('Error fetching posts:', error);
+}
+
+// Transform Supabase posts to match the expected format
+const transformedPosts = (allPosts || []).map(post => ({
+  slug: post.slug,
+  body: post.content || '',
+  data: {
+    title: post.title,
+    description: post.description,
+    pubDate: new Date(post.published_at || post.created_at),
+    heroImage: post.hero_image,
+    tags: [], // TODO: Implement tags from post_tags table
+    draft: post.is_draft
+  }
+}));
+
+// Get featured post (most recent)
+const featuredPost = transformedPosts[0];
+
+// Get latest 3 posts (excluding the featured one)
+const latestPosts = transformedPosts.slice(1, 4);
 ---
 
-<BaseLayout
-  title="StoryHub"
-  description="Stay on the story with StoryHub - A modern blog featuring engaging stories, insights, and creative content."
->
+<BaseLayout title="StoryHub" description="Stay on the story with StoryHub - A modern blog featuring engaging stories, insights, and creative content that keeps you engaged and inspired.">
   <!-- Hero Section -->
   <section class="relative bg-white py-20 md:py-32 lg:py-40">
     <!-- Subtle background pattern -->
@@ -139,8 +167,126 @@ import LatestStories from "../components/LatestStories.astro";
   </section>
 
   <!-- Featured Stories Section -->
-  <FeaturedStories />
+  <section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Story</h2>
+      
+      {featuredPost && (
+        <article class="max-w-4xl mx-auto">
+          <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+            {featuredPost.data.heroImage && (
+              <div class="aspect-video overflow-hidden">
+                <img 
+                  src={featuredPost.data.heroImage} 
+                  alt={featuredPost.data.title}
+                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            )}
+            <div class="p-8">
+              <div class="flex items-center gap-4 mb-4">
+                <time class="text-sm text-gray-500">
+                  {formatDate(featuredPost.data.pubDate)}
+                </time>
+                {featuredPost.data.tags && (
+                  <div class="flex gap-2">
+                    {featuredPost.data.tags.slice(0, 3).map((tag) => (
+                      <span class="px-3 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4 hover:text-primary-600 transition-colors">
+                <a href={`/blog/${featuredPost.slug}`}>
+                  {featuredPost.data.title}
+                </a>
+              </h3>
+              <p class="text-gray-600 text-lg mb-6 leading-relaxed">
+                {featuredPost.data.description}
+              </p>
+              <a 
+                href={`/blog/${featuredPost.slug}`}
+                class="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium transition-colors"
+              >
+                Read more
+                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </article>
+      )}
+    </div>
+  </section>
 
   <!-- Latest Stories Section -->
-  <LatestStories />
+  <section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Latest Stories</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {latestPosts.map((post) => (
+          <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+            {post.data.heroImage && (
+              <div class="aspect-video overflow-hidden">
+                <img 
+                  src={post.data.heroImage} 
+                  alt={post.data.title}
+                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            )}
+            <div class="p-6">
+              <div class="flex items-center gap-3 mb-3">
+                <time class="text-sm text-gray-500">
+                  {formatDate(post.data.pubDate)}
+                </time>
+                {post.data.tags && post.data.tags[0] && (
+                  <span class="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+                    {post.data.tags[0]}
+                  </span>
+                )}
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-3 hover:text-primary-600 transition-colors">
+                <a href={`/blog/${post.slug}`}>
+                  {post.data.title}
+                </a>
+              </h3>
+              <p class="text-gray-600 mb-4 leading-relaxed">
+                {post.data.description}
+              </p>
+              <a 
+                href={`/blog/${post.slug}`}
+                class="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm transition-colors"
+              >
+                Read more
+                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+      
+      {latestPosts.length === 0 && (
+        <p class="text-center text-gray-600">No posts available yet. Check back soon!</p>
+      )}
+      
+      <div class="text-center mt-12">
+        <a 
+          href="/blog" 
+          class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          View All Posts
+          <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
 </BaseLayout>

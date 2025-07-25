@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../../utils/supabase';
+import { useStore } from '@nanostores/react';
+import { authStore } from '../../stores/auth';
 
 interface CommentFormProps {
   postId: string;
@@ -6,39 +9,74 @@ interface CommentFormProps {
 
 interface Comment {
   id: string;
-  postId: string;
-  author: string;
+  post_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  author_email: string | null;
   content: string;
-  timestamp: Date;
+  is_approved: boolean;
+  parent_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function CommentForm({ postId }: CommentFormProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [author, setAuthor] = useState('');
+  const [email, setEmail] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ author?: string; content?: string }>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [errors, setErrors] = useState<{ author?: string; email?: string; content?: string }>({});
+  
+  // Get current auth state
+  const auth = useStore(authStore);
+  const isAuthenticated = auth.user !== null;
 
-  // Load comments from localStorage on component mount
+  // Load comments from Supabase on component mount
   useEffect(() => {
-    const storedComments = localStorage.getItem(`comments_${postId}`);
-    if (storedComments) {
-      const parsedComments = JSON.parse(storedComments).map((comment: any) => ({
-        ...comment,
-        timestamp: new Date(comment.timestamp)
-      }));
-      // Sort comments chronologically (oldest first)
-      parsedComments.sort((a: Comment, b: Comment) => a.timestamp.getTime() - b.timestamp.getTime());
-      setComments(parsedComments);
-    }
+    fetchComments();
   }, [postId]);
+
+  // Fetch comments from Supabase
+  const fetchComments = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('post_id', postId)
+        .eq('is_approved', true)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching comments:', error);
+        return;
+      }
+
+      setComments(data || []);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Form validation
   const validateForm = () => {
-    const newErrors: { author?: string; content?: string } = {};
+    const newErrors: { author?: string; email?: string; content?: string } = {};
     
-    if (!author.trim()) {
-      newErrors.author = 'Name is required';
+    // For anonymous users, require name and email
+    if (!isAuthenticated) {
+      if (!author.trim()) {
+        newErrors.author = 'Name is required';
+      }
+      
+      if (!email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        newErrors.email = 'Please enter a valid email address';
+      }
     }
     
     if (!content.trim()) {
@@ -50,7 +88,7 @@ export default function CommentForm({ postId }: CommentFormProps) {
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -59,32 +97,55 @@ export default function CommentForm({ postId }: CommentFormProps) {
 
     setIsSubmitting(true);
 
-    // Create new comment
-    const newComment: Comment = {
-      id: `comment_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
-      postId,
-      author: author.trim(),
-      content: content.trim(),
-      timestamp: new Date()
-    };
+    try {
+      // Prepare comment data
+      const commentData = {
+        post_id: postId,
+        content: content.trim(),
+        author_id: isAuthenticated ? auth.user?.id : null,
+        author_name: isAuthenticated ? auth.user?.user_metadata?.full_name || auth.user?.email : author.trim(),
+        author_email: isAuthenticated ? auth.user?.email : email.trim(),
+        is_approved: false, // Comments require admin approval
+      };
 
-    // Add comment to state (display immediately)
-    const updatedComments = [...comments, newComment];
-    setComments(updatedComments);
+      // Insert comment into Supabase
+      const { data, error } = await supabase
+        .from('comments')
+        .insert([commentData])
+        .select()
+        .single();
 
-    // Persist to localStorage
-    localStorage.setItem(`comments_${postId}`, JSON.stringify(updatedComments));
+      if (error) {
+        console.error('Error submitting comment:', error);
+        alert('Failed to submit comment. Please try again.');
+        return;
+      }
 
-    // Reset form
-    setAuthor('');
-    setContent('');
-    setErrors({});
-    setIsSubmitting(false);
+      // Add new comment to state (display immediately)
+      if (data) {
+        setComments(prev => [...prev, data]);
+      }
+
+      // Reset form
+      setAuthor('');
+      setEmail('');
+      setContent('');
+      setErrors({});
+      
+      // Show success message
+      alert('Comment submitted successfully! It will appear after admin approval.');
+      
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+      alert('Failed to submit comment. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Format timestamp for display
-  const formatTimestamp = (timestamp: Date) => {
-    return timestamp.toLocaleDateString('en-US', {
+  const formatTimestamp = (timestamp: string) => {
+    return new Date(timestamp).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -93,12 +154,23 @@ export default function CommentForm({ postId }: CommentFormProps) {
     });
   };
 
+  // Get display name for comment author
+  const getAuthorDisplayName = (comment: Comment) => {
+    return comment.author_name || 'Anonymous';
+  };
+
+  // Get author initial for avatar
+  const getAuthorInitial = (comment: Comment) => {
+    const name = comment.author_name || 'Anonymous';
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
     <div className="mt-12 border-t border-gray-200 pt-8">
       {/* Comments Section Header */}
       <div className="mb-8">
         <h3 className="text-2xl font-heading font-semibold text-gray-900 mb-2">
-          Comments ({comments.length})
+          Comments ({isLoading ? '...' : comments.length})
         </h3>
         <p className="text-gray-600">
           Share your thoughts about this post
@@ -112,31 +184,70 @@ export default function CommentForm({ postId }: CommentFormProps) {
         </h4>
         
         <div className="space-y-4">
-          {/* Author Name Field */}
-          <div>
-            <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-1">
-              Your Name *
-            </label>
-            <input
-              type="text"
-              id="author"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              className={`
-                w-full px-3 py-2 border rounded-md shadow-sm text-gray-900
-                focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-                transition-colors duration-200
-                ${errors.author ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'}
-              `}
-              placeholder="Enter your name"
-              disabled={isSubmitting}
-            />
-            {errors.author && (
-              <p className="mt-1 text-sm text-red-600" role="alert">
-                {errors.author}
+          {/* Show auth status */}
+          {isAuthenticated && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
+              <p className="text-sm text-green-800">
+                ✓ Signed in as <strong>{auth.user?.user_metadata?.full_name || auth.user?.email}</strong>
               </p>
-            )}
-          </div>
+            </div>
+          )}
+          
+          {/* Author Name Field - Only for anonymous users */}
+          {!isAuthenticated && (
+            <div>
+              <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-1">
+                Your Name *
+              </label>
+              <input
+                type="text"
+                id="author"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                className={`
+                  w-full px-3 py-2 border rounded-md shadow-sm text-gray-900
+                  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                  transition-colors duration-200
+                  ${errors.author ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'}
+                `}
+                placeholder="Enter your name"
+                disabled={isSubmitting}
+              />
+              {errors.author && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {errors.author}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Email Field - Only for anonymous users */}
+          {!isAuthenticated && (
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Your Email *
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`
+                  w-full px-3 py-2 border rounded-md shadow-sm text-gray-900
+                  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                  transition-colors duration-200
+                  ${errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white'}
+                `}
+                placeholder="Enter your email"
+                disabled={isSubmitting}
+              />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {errors.email}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Comment Content Field */}
           <div>
@@ -171,10 +282,10 @@ export default function CommentForm({ postId }: CommentFormProps) {
               disabled={isSubmitting}
               className={`
                 px-6 py-2 rounded-md font-medium text-sm transition-all duration-200
-                focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                 ${isSubmitting
                   ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : 'bg-primary-500 text-white hover:bg-primary-600 hover:shadow-md'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md'
                 }
               `}
             >
@@ -186,7 +297,12 @@ export default function CommentForm({ postId }: CommentFormProps) {
 
       {/* Comments Display */}
       <div className="space-y-6">
-        {comments.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-8 text-gray-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p className="text-lg font-medium">Loading comments...</p>
+          </div>
+        ) : comments.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <svg
               className="mx-auto h-12 w-12 text-gray-300 mb-4"
@@ -217,17 +333,22 @@ export default function CommentForm({ postId }: CommentFormProps) {
                   {/* Author Avatar */}
                   <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">
-                      {comment.author.charAt(0).toUpperCase()}
+                      {getAuthorInitial(comment)}
                     </span>
                   </div>
                   
                   {/* Author Name */}
                   <div>
                     <h5 className="font-medium text-gray-900">
-                      {comment.author}
+                      {getAuthorDisplayName(comment)}
+                      {comment.author_id && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                          Verified
+                        </span>
+                      )}
                     </h5>
                     <p className="text-sm text-gray-500">
-                      {formatTimestamp(comment.timestamp)}
+                      {formatTimestamp(comment.created_at)}
                     </p>
                   </div>
                 </div>

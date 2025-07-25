@@ -1,5 +1,2 @@
-# Netlify CMS admin redirect
-/admin/* /admin/index.html 200
-
-# SPA fallback for admin
-/admin /admin/index.html 200
+# Admin routes handled by Astro
+# No redirects needed - Astro will handle /admin routes

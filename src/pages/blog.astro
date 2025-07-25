@@ -1,18 +1,35 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BlogCard from '../components/BlogCard.astro';
+import { supabase } from '../utils/supabase';
 
-// Get all blog posts
-const allPosts = await getCollection('blog', ({ data }) => {
-  return !data.draft;
-});
+// Get all published blog posts from Supabase
+const { data: allPosts, error } = await supabase
+  .from('posts')
+  .select('*')
+  .eq('is_draft', false)
+  .order('published_at', { ascending: false });
 
-// Sort posts by date (newest first)
-const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+if (error) {
+  console.error('Error fetching posts:', error);
+}
 
-// Get unique tags for filtering
-const allTags = [...new Set(allPosts.flatMap(post => post.data.tags || []))];
+// Transform Supabase posts to match the expected format
+const sortedPosts = (allPosts || []).map(post => ({
+  slug: post.slug,
+  body: post.content || '',
+  data: {
+    title: post.title,
+    description: post.description,
+    pubDate: new Date(post.published_at || post.created_at),
+    heroImage: post.hero_image,
+    tags: [], // TODO: Implement tags from post_tags table
+    draft: post.is_draft
+  }
+}));
+
+// Get unique tags for filtering (placeholder for now)
+const allTags = [];
 ---
 
 <BaseLayout title="All Stories - StoryHub" description="Browse all our stories, tutorials, and insights about web development, design, and technology.">

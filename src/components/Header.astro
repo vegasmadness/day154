@@ -26,9 +26,11 @@
         <a href="/contact" class="text-gray-600 hover:text-primary-500 font-medium transition-colors duration-200">
           Contact
         </a>
+        <!-- Admin link - only show on admin pages -->
+        <div id="admin-nav-link"></div>
       </nav>
       
-      <!-- Right side - Search icon and mobile menu -->
+      <!-- Right side - Search icon and logout (for admin pages) -->
       <div class="flex items-center space-x-4">
         <!-- Search Icon -->
         <button class="text-gray-400 hover:text-primary-500 transition-colors duration-200 p-2 rounded-full hover:bg-gray-50">
@@ -37,6 +39,9 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
         </button>
+        
+        <!-- Logout button (show only on admin pages) -->
+        <div id="logout-button"></div>
         
         <!-- Mobile menu button -->
         <button class="md:hidden text-gray-400 hover:text-primary-500 transition-colors duration-200 p-2 rounded-full hover:bg-gray-50" id="mobile-menu-button">
@@ -63,13 +68,15 @@
         <a href="/contact" class="block px-3 py-2 text-gray-600 hover:text-primary-500 hover:bg-gray-50 rounded-md font-medium transition-colors duration-200">
           Contact
         </a>
+        <!-- Mobile admin and logout links for admin pages -->
+        <div id="mobile-admin-links"></div>
       </div>
     </div>
   </div>
 </header>
 
 <script>
-  // Mobile menu toggle functionality
+  // Mobile menu toggle functionality and admin links
   document.addEventListener('DOMContentLoaded', () => {
     const mobileMenuButton = document.getElementById('mobile-menu-button');
     const mobileMenu = document.getElementById('mobile-menu');
@@ -78,6 +85,118 @@
       mobileMenuButton.addEventListener('click', () => {
         mobileMenu.classList.toggle('hidden');
       });
+    }
+    
+    // Add admin links for authenticated users (check if user is logged in)
+     // Check for Supabase authentication in various storage locations
+     const checkAuthentication = () => {
+       try {
+         console.log('Checking authentication...');
+         
+         // Debug: Log all localStorage keys
+         console.log('LocalStorage keys:', Object.keys(localStorage));
+         
+         // Check for common Supabase auth patterns
+         const authPatterns = [
+           'sb-localhost-auth-token',
+           'sb-127.0.0.1-auth-token', 
+           'sb-auth-token',
+           'supabase.auth.token',
+           'sb-access-token',
+           'sb-refresh-token'
+         ];
+         
+         for (const pattern of authPatterns) {
+           const value = localStorage.getItem(pattern);
+           if (value && value !== 'null' && value !== '{}') {
+             console.log('Found auth token:', pattern);
+             return true;
+           }
+         }
+         
+         // Check sessionStorage
+         for (const pattern of authPatterns) {
+           const value = sessionStorage.getItem(pattern);
+           if (value && value !== 'null' && value !== '{}') {
+             console.log('Found auth token in session:', pattern);
+             return true;
+           }
+         }
+         
+         // Check cookies
+         if (document.cookie.includes('sb-access-token') || document.cookie.includes('sb-refresh-token')) {
+           console.log('Found auth in cookies');
+           return true;
+         }
+         
+         // Comprehensive check for any supabase-related auth data
+         for (let i = 0; i < localStorage.length; i++) {
+           const key = localStorage.key(i);
+           if (key && (key.includes('supabase') || key.includes('sb-'))) {
+             const value = localStorage.getItem(key);
+             console.log('Supabase key found:', key, 'Value length:', value?.length);
+             if (value && value !== 'null' && value !== '{}' && value.length > 10) {
+               try {
+                 const parsed = JSON.parse(value);
+                 if (parsed && (parsed.access_token || parsed.user || parsed.session)) {
+                   console.log('Valid auth data found in:', key);
+                   return true;
+                 }
+               } catch (e) {
+                 // Not JSON, but might still be valid auth data
+                 if (value.length > 50) {
+                   console.log('Non-JSON auth data found in:', key);
+                   return true;
+                 }
+               }
+             }
+           }
+         }
+         
+         console.log('No authentication found');
+         return false;
+       } catch (error) {
+         console.log('Auth check error:', error);
+         return false;
+       }
+     };
+     
+     if (checkAuthentication()) {
+      // Desktop admin link
+      const adminNavLink = document.getElementById('admin-nav-link');
+      if (adminNavLink) {
+        adminNavLink.innerHTML = `
+          <a href="/admin/dashboard" class="text-gray-600 hover:text-primary-500 font-medium transition-colors duration-200">
+            Admin
+          </a>
+        `;
+      }
+      
+      // Desktop logout button
+      const logoutButton = document.getElementById('logout-button');
+      if (logoutButton) {
+        logoutButton.innerHTML = `
+          <a href="/auth/logout" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-gray-700 transition-colors duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+          </a>
+        `;
+      }
+      
+      // Mobile admin links
+      const mobileAdminLinks = document.getElementById('mobile-admin-links');
+      if (mobileAdminLinks) {
+        mobileAdminLinks.innerHTML = `
+          <a href="/admin/dashboard" class="block px-3 py-2 text-gray-600 hover:text-primary-500 hover:bg-gray-50 rounded-md font-medium transition-colors duration-200">
+            Admin
+          </a>
+          <a href="/auth/logout" class="block px-3 py-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-md font-medium transition-colors duration-200">
+            Logout
+          </a>
+        `;
+      }
     }
   });
 </script>

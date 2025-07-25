@@ -1,16 +1,32 @@
 ---
-import { getCollection } from 'astro:content';
 import BlogCard from './BlogCard.astro';
+import { supabase } from '../utils/supabase';
 
-// Get featured blog posts (first 3 published posts)
-const allPosts = await getCollection('blog', ({ data }) => {
-  return !data.draft;
-});
+// Get featured blog posts (first 3 published posts) from Supabase
+const { data: allPosts, error } = await supabase
+  .from('posts')
+  .select('*')
+  .eq('is_draft', false)
+  .order('published_at', { ascending: false })
+  .limit(3);
 
-// Sort posts by date (newest first) and take first 3 for featured
-const featuredPosts = allPosts
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-  .slice(0, 3);
+if (error) {
+  console.error('Error fetching featured posts:', error);
+}
+
+// Transform Supabase posts to match the expected format
+const transformedPosts = (allPosts || []).map(post => ({
+  slug: post.slug,
+  body: post.content || '',
+  data: {
+    title: post.title,
+    description: post.description,
+    pubDate: new Date(post.published_at || post.created_at),
+    heroImage: post.hero_image,
+    tags: [], // TODO: Implement tags from post_tags table
+    draft: post.is_draft
+  }
+}));
 ---
 
 <section class="py-16 md:py-20 lg:py-24 bg-white">
@@ -29,7 +45,7 @@ const featuredPosts = allPosts
     
     <!-- 3-Column Equal Grid Layout -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-      {featuredPosts.map((post) => (
+      {transformedPosts.map((post) => (
         <BlogCard 
           post={post} 
           featured={true}

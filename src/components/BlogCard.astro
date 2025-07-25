@@ -11,9 +11,9 @@ const { post, featured = false, className = '' } = Astro.props;
 const { title, description, pubDate, heroImage, tags } = post.data;
 
 // Calculate reading time (rough estimate: 200 words per minute)
-const content = post.body;
-const wordCount = content.split(/\s+/).length;
-const readingTime = Math.ceil(wordCount / 200);
+const content = post.body || '';
+const wordCount = content ? content.split(/\s+/).length : 0;
+const readingTime = Math.ceil(wordCount / 200) || 1;
 
 // Format date
 const formattedDate = new Intl.DateTimeFormat('en-US', {

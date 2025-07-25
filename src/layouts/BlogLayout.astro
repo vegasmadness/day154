@@ -142,8 +142,7 @@ const initialLikes = Math.floor(Math.random() * 50) + 5;
     )}
 
     <!-- Article Content with proper typography -->
-    <div class="prose prose-lg prose-gray max-w-none mb-16">
-      <Content />
+    <div class="prose prose-lg prose-gray max-w-none mb-16" set:html={Content()}>
     </div>
 
     <!-- Like Button Section -->
@@ -153,7 +152,7 @@ const initialLikes = Math.floor(Math.random() * 50) + 5;
           Did you enjoy this article?
         </p>
         <LikeButton 
-          postId={post.slug} 
+          postId={post.id} 
           initialLikes={initialLikes}
           client:load 
         />
@@ -224,7 +223,7 @@ const initialLikes = Math.floor(Math.random() * 50) + 5;
 
   <!-- Comments Section -->
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 lg:pr-80 pb-12">
-    <CommentForm postId={post.slug} client:load />
+    <CommentForm postId={post.id} client:load />
   </div>
 </BaseLayout>
 
