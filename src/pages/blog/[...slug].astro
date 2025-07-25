@@ -3,33 +3,20 @@ import BlogLayout from '../../layouts/BlogLayout.astro';
 import { supabase } from '../../utils/supabase';
 import { marked } from 'marked';
 
-// Enable static generation for blog posts
-export const prerender = true;
+// Get the slug from the URL parameters
+const { slug } = Astro.params;
 
-export async function getStaticPaths() {
-  // Get all published blog posts from Supabase
-  const { data: posts, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('is_draft', false);
-  
-  if (error) {
-    console.error('Error fetching posts for static paths:', error);
-    return [];
-  }
-  
-  // Generate static paths for each blog post
-  return (posts || []).map((post) => ({
-    params: { slug: post.slug },
-    props: { post },
-  }));
+// Fetch the specific blog post from Supabase
+const { data: post, error } = await supabase
+  .from('posts')
+  .select('*')
+  .eq('slug', slug)
+  .eq('is_draft', false)
+  .single();
+
+if (error) {
+  console.error('Error fetching post:', error);
 }
-
-type Props = {
-  post: any; // Supabase post type
-};
-
-const { post } = Astro.props;
 
 // Handle missing post
 if (!post) {
