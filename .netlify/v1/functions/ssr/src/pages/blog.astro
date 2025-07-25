@@ -1,0 +1,105 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BlogCard from '../components/BlogCard.astro';
+import { supabase } from '../utils/supabase';
+
+// Get all published blog posts from Supabase
+const { data: allPosts, error } = await supabase
+  .from('posts')
+  .select('*')
+  .eq('is_draft', false)
+  .order('published_at', { ascending: false });
+
+if (error) {
+  console.error('Error fetching posts:', error);
+}
+
+// Transform Supabase posts to match the expected format
+const sortedPosts = (allPosts || []).map(post => ({
+  slug: post.slug,
+  body: post.content || '',
+  data: {
+    title: post.title,
+    description: post.description,
+    pubDate: new Date(post.published_at || post.created_at),
+    heroImage: post.hero_image,
+    tags: [], // TODO: Implement tags from post_tags table
+    draft: post.is_draft
+  }
+}));
+
+// Get unique tags for filtering (placeholder for now)
+const allTags = [];
+---
+
+<BaseLayout title="All Stories - StoryHub" description="Browse all our stories, tutorials, and insights about web development, design, and technology.">
+  <!-- Page Header -->
+  <section class="bg-gradient-to-br from-gray-50 via-white to-primary-50/30 py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <h1 class="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+          All Stories
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          Explore our complete collection of stories, tutorials, and insights about web development, design, and technology.
+        </p>
+        
+        <!-- Stats -->
+        <div class="flex justify-center items-center gap-8 text-sm text-gray-500">
+          <span>{sortedPosts.length} stories</span>
+          <span>•</span>
+          <span>{allTags.length} topics</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Blog Posts Grid -->
+  <section class="py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Featured Post -->
+      {sortedPosts.length > 0 && (
+        <div class="mb-16">
+          <div class="flex items-center mb-8">
+            <h2 class="font-heading text-2xl font-bold text-gray-900">Latest Story</h2>
+            <div class="ml-4 h-0.5 bg-primary-500 flex-1 max-w-20"></div>
+          </div>
+          <div class="max-w-4xl">
+            <BlogCard post={sortedPosts[0]} featured={true} />
+          </div>
+        </div>
+      )}
+      
+      <!-- All Posts -->
+      {sortedPosts.length > 1 && (
+        <div>
+          <div class="flex items-center mb-8">
+            <h2 class="font-heading text-2xl font-bold text-gray-900">More Stories</h2>
+            <div class="ml-4 h-0.5 bg-primary-500 flex-1 max-w-20"></div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {sortedPosts.slice(1).map((post) => (
+              <BlogCard post={post} />
+            ))}
+          </div>
+        </div>
+      )}
+      
+      <!-- Empty State -->
+      {sortedPosts.length === 0 && (
+        <div class="text-center py-16">
+          <div class="max-w-md mx-auto">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 class="font-heading text-xl font-semibold text-gray-900 mb-2">No stories yet</h3>
+            <p class="text-gray-600">Check back soon for new content!</p>
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
