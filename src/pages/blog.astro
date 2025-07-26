@@ -14,6 +14,33 @@ if (error) {
   console.error('Error fetching posts:', error);
 }
 
+// Fetch all post-tag relationships for the published posts
+const postIds = allPosts?.map(post => post.id) || [];
+const { data: allPostTags, error: tagsError } = await supabase
+  .from('post_tags')
+  .select(`
+    post_id,
+    tags (
+      id,
+      name,
+      slug
+    )
+  `)
+  .in('post_id', postIds);
+
+if (tagsError) {
+  console.error('Error fetching post tags:', tagsError);
+}
+
+// Create a map of post ID to tags for efficient lookup
+const postTagsMap = new Map();
+allPostTags?.forEach(pt => {
+  if (!postTagsMap.has(pt.post_id)) {
+    postTagsMap.set(pt.post_id, []);
+  }
+  postTagsMap.get(pt.post_id).push(pt.tags);
+});
+
 // Transform Supabase posts to match the expected format
 const sortedPosts = (allPosts || []).map(post => ({
   slug: post.slug,
@@ -23,13 +50,13 @@ const sortedPosts = (allPosts || []).map(post => ({
     description: post.description,
     pubDate: new Date(post.published_at || post.created_at),
     heroImage: post.hero_image,
-    tags: [], // TODO: Implement tags from post_tags table
+    tags: postTagsMap.get(post.id) || [], // Now populated with actual tags from database
     draft: post.is_draft
   }
 }));
 
-// Get unique tags for filtering (placeholder for now)
-const allTags = [];
+// Get unique tags for filtering and stats
+const allTags = [...new Set(allPostTags?.map(pt => pt.tags.name) || [])];
 ---
 
 <BaseLayout title="All Stories - StoryHub" description="Browse all our stories, tutorials, and insights about web development, design, and technology.">

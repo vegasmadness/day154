@@ -1,0 +1,173 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import { supabase } from '../../utils/supabase';
+
+export async function getStaticPaths() {
+  // Get all unique tags from the database
+  const { data: tags, error } = await supabase
+    .from('tags')
+    .select('name')
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching tags:', error);
+    return [];
+  }
+
+  return tags.map((tag) => ({
+    params: { slug: tag.name.toLowerCase() },
+    props: { tagName: tag.name }
+  }));
+}
+
+const { slug } = Astro.params;
+const { tagName } = Astro.props;
+
+// Use the slug parameter to find the exact tag name (case-insensitive)
+const { data: tagData, error: tagError } = await supabase
+  .from('tags')
+  .select('name')
+  .ilike('name', slug)
+  .single();
+
+if (tagError) {
+  console.error('Error fetching tag:', tagError);
+}
+
+const actualTagName = tagData?.name || tagName;
+
+// Fetch posts with this specific tag
+const { data: postTags, error } = await supabase
+  .from('post_tags')
+  .select(`
+    posts (
+      id,
+      title,
+      slug,
+      content,
+      hero_image,
+      published_at,
+      created_at,
+      updated_at,
+      categories (
+        id,
+        name,
+        slug,
+        color
+      )
+    ),
+    tags!inner (
+      id,
+      name
+    )
+  `)
+  .eq('tags.name', actualTagName);
+
+if (error) {
+  console.error('Error fetching posts for tag:', error);
+}
+
+// Transform the data to match the expected format
+const posts = postTags?.map(pt => {
+  const post = pt.posts;
+  return {
+    slug: post.slug,
+    data: {
+      title: post.title,
+      description: post.content ? post.content.substring(0, 150) + '...' : '',
+      pubDate: new Date(post.published_at || post.created_at),
+      heroImage: post.hero_image,
+      tags: [{ name: actualTagName }], // Include the current tag
+      category: post.categories
+    },
+    body: post.content || ''
+  };
+}) || [];
+
+// Sort posts by published date (newest first)
+posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// Get all tags for each post
+for (const post of posts) {
+  const { data: allPostTags } = await supabase
+    .from('post_tags')
+    .select(`
+      tags (
+        name
+      )
+    `)
+    .eq('post_id', postTags?.find(pt => pt.posts.slug === post.slug)?.posts.id);
+  
+  if (allPostTags) {
+    post.data.tags = allPostTags.map(pt => ({ name: pt.tags.name }));
+  }
+}
+---
+
+<BaseLayout 
+  title={`Posts tagged with "${actualTagName}" | My Blog`}
+  description={`All blog posts tagged with ${actualTagName}`}
+>
+  <main class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+        {actualTagName.charAt(0).toUpperCase() + actualTagName.slice(1)}
+      </h1>
+      
+      <!-- Breadcrumb Navigation -->
+      <nav class="flex justify-center items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="/" class="hover:text-primary-500 transition-colors duration-200">Home</a>
+        <span>/</span>
+        <a href="/blog" class="hover:text-primary-500 transition-colors duration-200">Tags</a>
+        <span>/</span>
+        <span class="text-gray-700 font-medium">{actualTagName.charAt(0).toUpperCase() + actualTagName.slice(1)}</span>
+      </nav>
+      
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        {posts.length} {posts.length === 1 ? 'post' : 'posts'} found
+      </p>
+    </div>
+
+    <!-- Posts Grid -->
+    {posts.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {posts.map((post) => (
+          <BlogCard post={post} />
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-12">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+          No posts found
+        </h2>
+        <p class="text-gray-600 mb-8">
+          There are no published posts with the tag "{actualTagName}" yet.
+        </p>
+        <a 
+          href="/blog" 
+          class="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+        >
+          View All Posts
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </a>
+      </div>
+    )}
+
+    <!-- Back to Blog -->
+    <div class="text-center mt-12">
+      <a 
+        href="/blog" 
+        class="inline-flex items-center gap-2 text-primary-500 hover:text-primary-600 font-medium transition-colors duration-200"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+        </svg>
+        Back to All Posts
+      </a>
+    </div>
+  </main>
+</BaseLayout>

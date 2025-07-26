@@ -1,0 +1,154 @@
+---
+// Test page to verify WebSocket/Realtime functionality
+---
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Realtime Test - My Blog</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Supabase Realtime Test</h1>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Connection Status</h2>
+            <div id="status" class="text-gray-600">Connecting...</div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Real-time Events</h2>
+            <div id="events" class="space-y-2 max-h-64 overflow-y-auto">
+                <!-- Events will appear here -->
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Test Actions</h2>
+            <div class="space-x-4">
+                <button id="testLike" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Test Like Insert
+                </button>
+                <button id="testComment" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Test Comment Insert
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+        const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+            document.getElementById('status').innerHTML = '<span class="text-red-600">❌ Supabase environment variables not found</span>';
+        } else {
+            const { createClient } = supabase;
+            const supabaseClient = createClient(supabaseUrl, supabaseKey);
+            
+            const statusEl = document.getElementById('status');
+            const eventsEl = document.getElementById('events');
+            
+            function addEvent(message, type = 'info') {
+                const eventEl = document.createElement('div');
+                const timestamp = new Date().toLocaleTimeString();
+                const colorClass = type === 'error' ? 'text-red-600' : type === 'success' ? 'text-green-600' : 'text-blue-600';
+                eventEl.innerHTML = `<span class="text-gray-500">[${timestamp}]</span> <span class="${colorClass}">${message}</span>`;
+                eventsEl.appendChild(eventEl);
+                eventsEl.scrollTop = eventsEl.scrollHeight;
+            }
+            
+            // Test connection
+            statusEl.innerHTML = '<span class="text-yellow-600">🔄 Testing connection...</span>';
+            addEvent('Initializing Supabase client...');
+            
+            // Set up realtime subscriptions
+            const likesChannel = supabaseClient
+                .channel('test-likes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'likes'
+                    },
+                    (payload) => {
+                        addEvent(`Like event: ${payload.eventType} - ${JSON.stringify(payload.new || payload.old)}`, 'success');
+                    }
+                )
+                .subscribe((status) => {
+                    addEvent(`Likes channel status: ${status}`);
+                    if (status === 'SUBSCRIBED') {
+                        statusEl.innerHTML = '<span class="text-green-600">✅ Connected to Realtime</span>';
+                    }
+                });
+            
+            const commentsChannel = supabaseClient
+                .channel('test-comments')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'comments'
+                    },
+                    (payload) => {
+                        addEvent(`Comment event: ${payload.eventType} - ${JSON.stringify(payload.new || payload.old)}`, 'success');
+                    }
+                )
+                .subscribe((status) => {
+                    addEvent(`Comments channel status: ${status}`);
+                });
+            
+            // Test buttons
+            document.getElementById('testLike').addEventListener('click', async () => {
+                try {
+                    addEvent('Inserting test like...');
+                    const { data, error } = await supabaseClient
+                        .from('likes')
+                        .insert({
+                            post_id: 'test-post-id',
+                            user_id: null,
+                            ip_address: 'test-ip'
+                        });
+                    
+                    if (error) {
+                        addEvent(`Error inserting like: ${error.message}`, 'error');
+                    } else {
+                        addEvent('Test like inserted successfully', 'success');
+                    }
+                } catch (err) {
+                    addEvent(`Error: ${err.message}`, 'error');
+                }
+            });
+            
+            document.getElementById('testComment').addEventListener('click', async () => {
+                try {
+                    addEvent('Inserting test comment...');
+                    const { data, error } = await supabaseClient
+                        .from('comments')
+                        .insert({
+                            post_id: 'test-post-id',
+                            content: 'Test comment from realtime test',
+                            author_name: 'Test User',
+                            author_email: 'test@example.com',
+                            is_approved: false
+                        });
+                    
+                    if (error) {
+                        addEvent(`Error inserting comment: ${error.message}`, 'error');
+                    } else {
+                        addEvent('Test comment inserted successfully', 'success');
+                    }
+                } catch (err) {
+                    addEvent(`Error: ${err.message}`, 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

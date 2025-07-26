@@ -22,16 +22,31 @@ const formattedDate = new Intl.DateTimeFormat('en-US', {
   day: 'numeric'
 }).format(pubDate);
 
-// Tag colors for visual variety
-const tagColors = [
-  'bg-primary-500 text-white',
-  'bg-accent-blue text-white',
-  'bg-accent-green text-white',
-  'bg-accent-purple text-white',
-  'bg-gray-700 text-white',
+// Tag colors using pastel colors from the provided list
+// Excluding category colors: #EEADA7, #80E3CD, #F9F48C
+// Using white text for better contrast on pastel backgrounds
+
+const tagBackgroundColors = [
+  '#E7A396', '#BAB9E1', '#D9A1C0', '#F7A978', '#F0ACB7',
+  '#F8E5EB', '#EBCFB2', '#DDE48E', '#B0E3CD', '#BDD4F6',
+  '#CCCBF2', '#CAD892', '#969A60', '#758B46', '#98D0F5',
+  '#5E9DBE', '#3C8782', '#EB5A6D', '#F3C9E4', '#BD8BDB',
+  '#FAF5AF', '#AD9281', '#F2C6C7', '#EB7157', '#ED6C84',
+  '#B3A061', '#A0BA46'
 ];
 
-const getTagColor = (index: number) => tagColors[index % tagColors.length];
+// Create a hash function to assign consistent colors to tag names
+const getTagColorIndex = (tagName: string) => {
+  let hash = 0;
+  for (let i = 0; i < tagName.length; i++) {
+    const char = tagName.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash) % tagBackgroundColors.length;
+};
+
+const getTagBackgroundColor = (tagName: string) => tagBackgroundColors[getTagColorIndex(tagName)];
 ---
 
 <article class={`group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden ${featured ? 'md:col-span-2 lg:col-span-1' : ''} ${className}`}>
@@ -68,12 +83,14 @@ const getTagColor = (index: number) => tagColors[index % tagColors.length];
     <!-- Tags -->
     {tags && tags.length > 0 && (
       <div class="flex flex-wrap gap-2 mb-4">
-        {tags.slice(0, 3).map((tag, index) => (
-          <span 
-            class={`px-3 py-1 rounded-full text-xs font-medium ${getTagColor(index)}`}
-          >
-            #{tag}
-          </span>
+        {tags.slice(0, 3).map((tag) => (
+          <a 
+             href={`/tag/${encodeURIComponent(tag.name.toLowerCase())}`}
+             class="px-2 py-1 text-xs rounded-full text-gray-600 font-medium hover:text-gray-900 hover:opacity-80 transition-all duration-200"
+             style={`background-color: ${getTagBackgroundColor(tag.name)}`}
+           >
+             {tag.name}
+           </a>
         ))}
         {tags.length > 3 && (
           <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">

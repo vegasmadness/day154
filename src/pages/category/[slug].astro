@@ -1,0 +1,121 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import { supabase } from '../../utils/supabase';
+
+// Get the category slug from the URL parameters
+const { slug } = Astro.params;
+
+// Fetch the category information
+const { data: category, error: categoryError } = await supabase
+  .from('categories')
+  .select('*')
+  .eq('slug', slug)
+  .single();
+
+if (categoryError || !category) {
+  console.error('Error fetching category:', categoryError);
+  return Astro.redirect('/404');
+}
+
+// Fetch posts for this category
+const { data: categoryPosts, error: postsError } = await supabase
+  .from('posts')
+  .select(`
+    *,
+    post_categories!inner(
+      category_id
+    )
+  `)
+  .eq('post_categories.category_id', category.id)
+  .eq('is_draft', false)
+  .order('published_at', { ascending: false });
+
+if (postsError) {
+  console.error('Error fetching category posts:', postsError);
+}
+
+// Transform posts to match expected format
+const sortedPosts = (categoryPosts || []).map(post => ({
+  slug: post.slug,
+  body: post.content || '',
+  data: {
+    title: post.title,
+    description: post.description,
+    pubDate: new Date(post.published_at || post.created_at),
+    heroImage: post.hero_image,
+    tags: [], // TODO: Implement tags from post_tags table
+    draft: post.is_draft
+  }
+}));
+
+// Capitalize category name for display
+const categoryDisplayName = category.name;
+---
+
+<BaseLayout 
+  title={`${categoryDisplayName} - Blog Categories`} 
+  description={category.description || `Browse all ${categoryDisplayName.toLowerCase()} related posts and stories.`}
+>
+  <main class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+        {categoryDisplayName}
+      </h1>
+      
+      <!-- Breadcrumb Navigation -->
+      <nav class="flex justify-center items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="/" class="hover:text-primary-500 transition-colors duration-200">Home</a>
+        <span>/</span>
+        <a href="/blog" class="hover:text-primary-500 transition-colors duration-200">Categories</a>
+        <span>/</span>
+        <span class="text-gray-700 font-medium">{categoryDisplayName}</span>
+      </nav>
+      
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        {sortedPosts.length} {sortedPosts.length === 1 ? 'post' : 'posts'} found
+      </p>
+    </div>
+
+    <!-- Posts Grid -->
+    {sortedPosts.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {sortedPosts.map((post) => (
+          <BlogCard post={post} />
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-12">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+          No posts found
+        </h2>
+        <p class="text-gray-600 mb-8">
+          There are no published posts in the "{categoryDisplayName}" category yet.
+        </p>
+        <a 
+          href="/blog" 
+          class="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+        >
+          View All Posts
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </a>
+      </div>
+    )}
+
+    <!-- Back to Blog -->
+    <div class="text-center mt-12">
+      <a 
+        href="/blog" 
+        class="inline-flex items-center gap-2 text-primary-500 hover:text-primary-600 font-medium transition-colors duration-200"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+        </svg>
+        Back to All Posts
+      </a>
+    </div>
+  </main>
+</BaseLayout>

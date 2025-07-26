@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
-import type { User } from '@supabase/supabase-js';
+import type { User, RealtimeChannel } from '@supabase/supabase-js';
 
 interface LikeButtonProps {
   postId: string;
@@ -12,6 +12,7 @@ export default function LikeButton({ postId, initialLikes = 0 }: LikeButtonProps
   const [hasLiked, setHasLiked] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [realtimeChannel, setRealtimeChannel] = useState<RealtimeChannel | null>(null);
 
   // Load like state from Supabase on component mount
   useEffect(() => {
@@ -61,7 +62,48 @@ export default function LikeButton({ postId, initialLikes = 0 }: LikeButtonProps
       }
     }
     
+    // Set up real-time subscription for like changes
+    const setupRealtimeSubscription = () => {
+      const channel = supabase
+        .channel(`likes-${postId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'likes',
+            filter: `post_id=eq.${postId}`
+          },
+          async (payload) => {
+            console.log('Real-time like change detected:', payload);
+            
+            // Refresh like count when any like change occurs
+            try {
+              const { data: statsData, error: statsError } = await supabase
+                .rpc('get_post_stats', { post_uuid: postId });
+              
+              if (!statsError && statsData && statsData.length > 0) {
+                setLikes(statsData[0].like_count);
+              }
+            } catch (error) {
+              console.error('Error refreshing like count:', error);
+            }
+          }
+        )
+        .subscribe();
+      
+      setRealtimeChannel(channel);
+    };
+    
     loadLikeState();
+    setupRealtimeSubscription();
+    
+    // Cleanup subscription on unmount
+    return () => {
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
+    };
   }, [postId, initialLikes]);
 
   // Handle like button click

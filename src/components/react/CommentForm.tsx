@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
 import { useStore } from '@nanostores/react';
 import { authStore } from '../../stores/auth';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface CommentFormProps {
   postId: string;
@@ -28,14 +29,48 @@ export default function CommentForm({ postId }: CommentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState<{ author?: string; email?: string; content?: string }>({});
+  const [realtimeChannel, setRealtimeChannel] = useState<RealtimeChannel | null>(null);
   
   // Get current auth state
   const auth = useStore(authStore);
   const isAuthenticated = auth.user !== null;
 
-  // Load comments from Supabase on component mount
+  // Load comments from Supabase on component mount and set up real-time subscription
   useEffect(() => {
     fetchComments();
+    
+    // Set up real-time subscription for comment changes
+    const setupRealtimeSubscription = () => {
+      const channel = supabase
+        .channel(`comments-${postId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'comments',
+            filter: `post_id=eq.${postId}`
+          },
+          (payload) => {
+            console.log('Real-time comment change detected:', payload);
+            
+            // Refresh comments when any comment change occurs
+            fetchComments();
+          }
+        )
+        .subscribe();
+      
+      setRealtimeChannel(channel);
+    };
+    
+    setupRealtimeSubscription();
+    
+    // Cleanup subscription on unmount
+    return () => {
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
+    };
   }, [postId]);
 
   // Fetch comments from Supabase
@@ -121,11 +156,6 @@ export default function CommentForm({ postId }: CommentFormProps) {
         return;
       }
 
-      // Add new comment to state (display immediately)
-      if (data) {
-        setComments(prev => [...prev, data]);
-      }
-
       // Reset form
       setAuthor('');
       setEmail('');
@@ -134,6 +164,8 @@ export default function CommentForm({ postId }: CommentFormProps) {
       
       // Show success message
       alert('Comment submitted successfully! It will appear after admin approval.');
+      
+      // Note: Real-time subscription will automatically update the comments list
       
     } catch (error) {
       console.error('Error submitting comment:', error);

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import BlogCard from '../components/BlogCard.astro';
 import { formatDate } from '../utils/formatDate';
 import { supabase } from '../utils/supabase';
 
@@ -14,6 +15,33 @@ if (error) {
   console.error('Error fetching posts:', error);
 }
 
+// Fetch all post-tag relationships for the published posts
+const postIds = allPosts?.map(post => post.id) || [];
+const { data: allPostTags, error: tagsError } = await supabase
+  .from('post_tags')
+  .select(`
+    post_id,
+    tags (
+      id,
+      name,
+      slug
+    )
+  `)
+  .in('post_id', postIds);
+
+if (tagsError) {
+  console.error('Error fetching post tags:', tagsError);
+}
+
+// Create a map of post ID to tags for efficient lookup
+const postTagsMap = new Map();
+allPostTags?.forEach(pt => {
+  if (!postTagsMap.has(pt.post_id)) {
+    postTagsMap.set(pt.post_id, []);
+  }
+  postTagsMap.get(pt.post_id).push(pt.tags);
+});
+
 // Transform Supabase posts to match the expected format
 const transformedPosts = (allPosts || []).map(post => ({
   slug: post.slug,
@@ -23,7 +51,7 @@ const transformedPosts = (allPosts || []).map(post => ({
     description: post.description,
     pubDate: new Date(post.published_at || post.created_at),
     heroImage: post.hero_image,
-    tags: [], // TODO: Implement tags from post_tags table
+    tags: postTagsMap.get(post.id) || [], // Now populated with actual tags from database
     draft: post.is_draft
   }
 }));
@@ -31,8 +59,8 @@ const transformedPosts = (allPosts || []).map(post => ({
 // Get featured post (most recent)
 const featuredPost = transformedPosts[0];
 
-// Get latest 3 posts (excluding the featured one)
-const latestPosts = transformedPosts.slice(1, 4);
+// Get all remaining posts (excluding the featured one)
+const allRemainingPosts = transformedPosts.slice(1);
 ---
 
 <BaseLayout title="StoryHub" description="Stay on the story with StoryHub - A modern blog featuring engaging stories, insights, and creative content that keeps you engaged and inspired.">
@@ -222,71 +250,20 @@ const latestPosts = transformedPosts.slice(1, 4);
     </div>
   </section>
 
-  <!-- Latest Stories Section -->
+  <!-- All Stories Section -->
   <section class="py-16 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Latest Stories</h2>
+      <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">All Stories</h2>
       
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {latestPosts.map((post) => (
-          <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-            {post.data.heroImage && (
-              <div class="aspect-video overflow-hidden">
-                <img 
-                  src={post.data.heroImage} 
-                  alt={post.data.title}
-                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            )}
-            <div class="p-6">
-              <div class="flex items-center gap-3 mb-3">
-                <time class="text-sm text-gray-500">
-                  {formatDate(post.data.pubDate)}
-                </time>
-                {post.data.tags && post.data.tags[0] && (
-                  <span class="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
-                    {post.data.tags[0]}
-                  </span>
-                )}
-              </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-3 hover:text-primary-600 transition-colors">
-                <a href={`/blog/${post.slug}`}>
-                  {post.data.title}
-                </a>
-              </h3>
-              <p class="text-gray-600 mb-4 leading-relaxed">
-                {post.data.description}
-              </p>
-              <a 
-                href={`/blog/${post.slug}`}
-                class="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm transition-colors"
-              >
-                Read more
-                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </a>
-            </div>
-          </article>
+        {allRemainingPosts.map((post) => (
+          <BlogCard post={post} />
         ))}
       </div>
       
-      {latestPosts.length === 0 && (
-        <p class="text-center text-gray-600">No posts available yet. Check back soon!</p>
+      {allRemainingPosts.length === 0 && (
+        <p class="text-center text-gray-600">No additional posts available yet. Check back soon!</p>
       )}
-      
-      <div class="text-center mt-12">
-        <a 
-          href="/blog" 
-          class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          View All Posts
-          <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </a>
-      </div>
     </div>
   </section>
 </BaseLayout>

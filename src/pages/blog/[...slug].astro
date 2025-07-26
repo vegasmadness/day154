@@ -23,6 +23,25 @@ if (!post) {
   return Astro.redirect('/404');
 }
 
+// Fetch tags for this post
+const { data: postTags, error: tagsError } = await supabase
+  .from('post_tags')
+  .select(`
+    tags (
+      id,
+      name,
+      slug
+    )
+  `)
+  .eq('post_id', post.id);
+
+if (tagsError) {
+  console.error('Error fetching post tags:', tagsError);
+}
+
+// Extract tag names from the result
+const tags = postTags?.map(pt => pt.tags.name) || [];
+
 // Transform post to match expected format
 const transformedPost = {
   id: post.id, // Include the UUID for database operations
@@ -33,7 +52,7 @@ const transformedPost = {
     pubDate: new Date(post.published_at || post.created_at),
     updatedDate: post.updated_at ? new Date(post.updated_at) : undefined,
     heroImage: post.hero_image,
-    tags: [], // TODO: Implement tags from post_tags table
+    tags: tags, // Now populated with actual tags from database
     draft: post.is_draft
   },
   body: post.content || ''

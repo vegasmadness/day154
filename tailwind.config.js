@@ -3,6 +3,9 @@ export default {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
   theme: {
     extend: {
+      spacing: {
+        '0.5': '0.125rem',  // Add custom spacing for py-0.5
+      },
       colors: {
         // StoryHub-inspired color palette
         primary: {

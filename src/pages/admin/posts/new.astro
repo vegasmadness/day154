@@ -445,15 +445,15 @@ import AuthGuard from '../../../components/AuthGuard.astro';
     
     container.innerHTML = '';
     
-    // Sort categories in the specified order: House, Home, Health
+    // Sort categories in the specified order: Build, Family, Health
     const orderedCategories = [...categories].sort((a, b) => {
-      const order = { 'House': 1, 'Home': 2, 'Health': 3 };
+      const order = { 'Build': 1, 'Family': 2, 'Health': 3 };
       return (order[a.name] || 999) - (order[b.name] || 999);
     });
     
     orderedCategories.forEach(category => {
       const choiceChip = document.createElement('div');
-      choiceChip.className = 'choice-chip inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors';
+      choiceChip.className = 'choice-chip inline-flex items-center justify-center px-2 py-1 rounded-xl text-xs font-medium border=none cursor-pointer transition-colors';
       choiceChip.dataset.categoryId = category.id;
       choiceChip.dataset.categoryColor = category.color;
       choiceChip.textContent = category.name;
