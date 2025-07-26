@@ -30,54 +30,6 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       <main class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
           <form id="post-form" class="space-y-6">
-            <!-- Basic Information -->
-            <div class="bg-white shadow rounded-lg">
-              <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Basic Information</h3>
-                
-                <div class="grid grid-cols-1 gap-6">
-                  <!-- Title -->
-                  <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700">Title *</label>
-                    <input type="text" name="title" id="title" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter post title">
-                  </div>
-
-                  <!-- Slug -->
-                  <div>
-                    <label for="slug" class="block text-sm font-medium text-gray-700">Slug *</label>
-                    <input type="text" name="slug" id="slug" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="post-url-slug">
-                    <p class="mt-1 text-sm text-gray-500">URL-friendly version of the title. Will be auto-generated if left empty.</p>
-                  </div>
-
-                  <!-- Excerpt -->
-                  <div>
-                    <label for="excerpt" class="block text-sm font-medium text-gray-700">Excerpt</label>
-                    <textarea name="excerpt" id="excerpt" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Brief description of the post (optional)"></textarea>
-                  </div>
-
-                  <!-- Tags -->
-                  <div>
-                    <label for="tags" class="block text-sm font-medium text-gray-700">Tags</label>
-                    <input type="text" name="tags" id="tags" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="tag1, tag2, tag3">
-                    <p class="mt-1 text-sm text-gray-500">Separate tags with commas</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Content -->
-            <div class="bg-white shadow rounded-lg">
-              <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Content</h3>
-                
-                <div>
-                  <label for="content" class="block text-sm font-medium text-gray-700">Post Content *</label>
-                  <textarea name="content" id="content" required rows="20" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="Write your post content in Markdown..."></textarea>
-                  <p class="mt-1 text-sm text-gray-500">You can use Markdown formatting. HTML is also supported.</p>
-                </div>
-              </div>
-            </div>
-
             <!-- Image Options -->
             <div class="bg-white shadow rounded-lg">
               <div class="px-4 py-5 sm:p-6">
@@ -127,18 +79,103 @@ import AuthGuard from '../../../components/AuthGuard.astro';
               </div>
             </div>
 
+            <!-- Basic Information -->
+            <div class="bg-white shadow rounded-lg">
+              <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Basic Information</h3>
+                
+                <div class="grid grid-cols-1 gap-6">
+                  <!-- Title -->
+                  <div>
+                    <label for="title" class="block text-sm font-medium text-gray-700">Title *</label>
+                    <input type="text" name="title" id="title" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter post title">
+                  </div>
+
+                  <!-- Slug -->
+                  <div>
+                    <label for="slug" class="block text-sm font-medium text-gray-700">Slug *</label>
+                    <input type="text" name="slug" id="slug" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="post-url-slug">
+                    <p class="mt-1 text-sm text-gray-500">url-friendly version of the title.</p>
+                  </div>
+
+                  <!-- Excerpt -->
+                  <div>
+                    <label for="excerpt" class="block text-sm font-medium text-gray-700">Excerpt</label>
+                    <textarea name="excerpt" id="excerpt" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Brief description of the post (optional)"></textarea>
+                  </div>
+
+                  <!-- Tags -->
+                  <div>
+                    <label for="tags" class="block text-sm font-medium text-gray-700">Tags</label>
+                    <input type="text" name="tags" id="tags" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="tag1, tag2, tag3">
+                    <p class="mt-1 text-sm text-gray-500">Separate tags with commas</p>
+                  </div>
+
+                  <!-- Categories -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+                    <p class="text-sm text-gray-600 mb-3">Select one or more of the categories below:</p>
+                    <div id="categories-container" class="flex flex-wrap gap-2">
+                      <!-- Categories will be loaded here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="bg-white shadow rounded-lg">
+              <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Content</h3>
+                
+                <div>
+                  <label for="content" class="block text-sm font-medium text-gray-700">Post Content *</label>
+                  <textarea name="content" id="content" required rows="20" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm" placeholder="Write your post content in Markdown..."></textarea>
+                  <p class="mt-1 text-sm text-gray-500">You can use Markdown formatting. HTML is also supported.</p>
+                </div>
+              </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="bg-white shadow rounded-lg">
               <div class="px-4 py-5 sm:p-6">
-                <!-- Publishing Options -->
+                <!-- Publishing Workflow Section -->
                 <div class="mb-6">
-                  <div class="flex items-center">
-                    <input id="published" name="published" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="published" class="ml-2 block text-sm text-gray-900">
-                      Publish immediately
-                    </label>
+                  <h3 class="text-lg font-medium text-gray-900 mb-4">Publishing Workflow</h3>
+                  
+                  <!-- Status Selection -->
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50" id="status-draft">
+                      <input type="radio" id="draft" name="post_status" value="draft" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300" checked>
+                      <div class="ml-3">
+                        <label for="draft" class="block text-sm font-medium text-gray-900 cursor-pointer">Draft</label>
+                        <p class="text-xs text-gray-500">Save as draft for later editing</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50" id="status-scheduled">
+                      <input type="radio" id="scheduled" name="post_status" value="scheduled" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                      <div class="ml-3">
+                        <label for="scheduled" class="block text-sm font-medium text-gray-900 cursor-pointer">Schedule</label>
+                        <p class="text-xs text-gray-500">Publish at a specific time</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50" id="status-published">
+                      <input type="radio" id="published" name="post_status" value="published" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                      <div class="ml-3">
+                        <label for="published" class="block text-sm font-medium text-gray-900 cursor-pointer">Publish Now</label>
+                        <p class="text-xs text-gray-500">Make live immediately</p>
+                      </div>
+                    </div>
                   </div>
-                  <p class="mt-1 text-sm text-gray-500">If unchecked, the post will be saved as a draft.</p>
+                  
+                  <!-- Schedule Date/Time (shown when scheduled is selected) -->
+                  <div id="schedule-section" class="hidden mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">Publish Date & Time</label>
+                    <input type="datetime-local" id="scheduled_date" name="scheduled_date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <p class="text-xs text-gray-500 mt-1">The post will be automatically published at this time</p>
+                  </div>
                 </div>
 
                 <div class="flex items-center justify-between">
@@ -153,13 +190,6 @@ import AuthGuard from '../../../components/AuthGuard.astro';
                   </div>
                   
                   <div class="flex items-center space-x-3">
-                    <button type="button" id="save-draft-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                      <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      Save Draft
-                    </button>
-                    
                     <button type="submit" id="publish-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                       <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -298,14 +328,15 @@ import AuthGuard from '../../../components/AuthGuard.astro';
   let isSubmitting = false;
   let selectedMedia = null;
   let mediaFiles = [];
+  let categories: any[] = [];
 
   function generateSlug(title: string): string {
     return title
-      .toLowerCase()
-      .replace(/[^a-z0-9 -]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+      .toLowerCase()                    // Convert to lowercase
+      .replace(/[^a-z0-9\s-]/g, '')    // Remove special characters, keep letters, numbers, spaces, and hyphens
+      .replace(/\s+/g, '-')            // Replace spaces with hyphens
+      .replace(/-+/g, '-')             // Replace multiple hyphens with single hyphen
+      .replace(/^-+|-+$/g, '');        // Remove leading and trailing hyphens
   }
 
   function showLoading() {
@@ -318,12 +349,144 @@ import AuthGuard from '../../../components/AuthGuard.astro';
 
   function showError(message: string) {
     hideLoading();
-    alert('Error: ' + message);
+    showToast(message, 'error');
   }
 
   function showSuccess(message: string) {
     hideLoading();
-    alert('Success: ' + message);
+    showToast(message, 'success');
+  }
+
+  function showToast(message: string, type: 'success' | 'error' = 'success') {
+    // Remove any existing toasts
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification fixed top-4 right-4 z-50 max-w-sm w-full transform transition-all duration-300 ease-in-out translate-x-full opacity-0';
+    
+    const bgColor = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+    const iconColor = type === 'success' ? 'text-green-400' : 'text-red-400';
+    const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
+    const icon = type === 'success' 
+      ? '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />'
+      : '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />';
+    
+    toast.innerHTML = `
+      <div class="${bgColor} border rounded-lg shadow-lg p-4">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 ${iconColor}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              ${icon}
+            </svg>
+          </div>
+          <div class="ml-3 flex-1">
+            <p class="text-sm font-medium ${textColor}">${message}</p>
+          </div>
+          <div class="ml-4 flex-shrink-0">
+            <button class="inline-flex ${textColor} hover:${textColor.replace('800', '600')} focus:outline-none" onclick="this.closest('.toast-notification').remove()">
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => {
+      toast.classList.remove('translate-x-full', 'opacity-0');
+      toast.classList.add('translate-x-0', 'opacity-100');
+    }, 10);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 300);
+      }
+    }, 4000);
+  }
+
+  // Category Functions
+  async function loadCategories() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error loading categories:', error);
+        return;
+      }
+      
+      categories = data || [];
+      renderCategories();
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  }
+  
+  function renderCategories() {
+    const container = document.getElementById('categories-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Sort categories in the specified order: House, Home, Health
+    const orderedCategories = [...categories].sort((a, b) => {
+      const order = { 'House': 1, 'Home': 2, 'Health': 3 };
+      return (order[a.name] || 999) - (order[b.name] || 999);
+    });
+    
+    orderedCategories.forEach(category => {
+      const choiceChip = document.createElement('div');
+      choiceChip.className = 'choice-chip inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors';
+      choiceChip.dataset.categoryId = category.id;
+      choiceChip.dataset.categoryColor = category.color;
+      choiceChip.textContent = category.name;
+      
+      // Set initial styling (unselected state)
+      choiceChip.style.backgroundColor = '#f3f4f6'; // light gray
+      choiceChip.style.borderColor = '#d1d5db'; // slightly darker gray border
+      choiceChip.style.color = '#6b7280'; // lighter gray font
+      
+      // Add click handler for selection
+      choiceChip.addEventListener('click', function() {
+        this.classList.toggle('selected');
+        
+        if (this.classList.contains('selected')) {
+          // Selected state: category color background, light gray border, lighter gray text
+          this.style.backgroundColor = category.color;
+          this.style.borderColor = '#d1d5db';
+          this.style.color = '#6b7280';
+        } else {
+          // Unselected state: light gray background and border, lighter gray text
+          this.style.backgroundColor = '#f3f4f6';
+          this.style.borderColor = '#d1d5db';
+          this.style.color = '#6b7280';
+        }
+      });
+      
+      container.appendChild(choiceChip);
+    });
+  }
+  
+  function getSelectedCategories(): string[] {
+    const selectedChips = document.querySelectorAll('.choice-chip.selected') as NodeListOf<HTMLElement>;
+    return Array.from(selectedChips).map(chip => chip.dataset.categoryId || '');
   }
 
   // Media Library Functions
@@ -422,10 +585,16 @@ import AuthGuard from '../../../components/AuthGuard.astro';
         // Remove previous selection
         document.querySelectorAll('.media-selected').forEach(el => {
           el.classList.remove('media-selected', 'border-indigo-500');
+          el.style.backgroundColor = '#e5e7eb';
+          el.style.borderColor = '#d1d5db';
+          el.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
         });
         
         // Add selection to current item
         mediaItem.classList.add('media-selected', 'border-indigo-500');
+        mediaItem.style.backgroundColor = '#dbeafe'; // Light blue background
+        mediaItem.style.borderColor = '#3b82f6'; // Blue border
+        mediaItem.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15)'; // Blue glow + shadow
         selectedMedia = file;
         const selectBtn = document.getElementById('select-media-btn') as HTMLButtonElement;
         if (selectBtn) selectBtn.disabled = false;
@@ -569,15 +738,27 @@ import AuthGuard from '../../../components/AuthGuard.astro';
         throw new Error('You must be logged in to create posts');
       }
 
-      // Prepare post data
+      // Prepare post data with enhanced workflow
+      let publishedAt = null;
+      let isDraft = true;
+      
+      if (postData.post_status === 'published') {
+        publishedAt = new Date().toISOString();
+        isDraft = false;
+      } else if (postData.post_status === 'scheduled' && postData.scheduled_date) {
+        publishedAt = new Date(postData.scheduled_date).toISOString();
+        isDraft = false;
+      }
+      
       const post = {
         title: postData.title,
         slug: postData.slug || generateSlug(postData.title),
         content: postData.content,
         description: postData.excerpt || null,
         hero_image: postData.featured_image || null,
-        is_draft: !published,
-        published_at: published ? new Date().toISOString() : null,
+        is_draft: isDraft,
+        published_at: publishedAt,
+        scheduled_at: postData.post_status === 'scheduled' ? publishedAt : null,
         author_id: user.id
       };
 
@@ -627,8 +808,25 @@ import AuthGuard from '../../../components/AuthGuard.astro';
             .insert([{ post_id: newPost.id, tag_id: tagId }]);
         }
       }
+      
+      // Handle categories if provided
+      if (postData.categories && postData.categories.length > 0) {
+        for (const categoryId of postData.categories) {
+          await supabase
+            .from('post_categories')
+            .insert([{ post_id: newPost.id, category_id: categoryId }]);
+        }
+      }
 
-      showSuccess(`Post ${published ? 'published' : 'saved as draft'} successfully!`);
+      let successMessage = 'Post saved as draft successfully!';
+      if (postData.post_status === 'published') {
+        successMessage = 'Post published successfully!';
+      } else if (postData.post_status === 'scheduled') {
+        const scheduleDate = new Date(postData.scheduled_date).toLocaleString();
+        successMessage = `Post scheduled for ${scheduleDate} successfully!`;
+      }
+      
+      showSuccess(successMessage);
       
       // Redirect to posts list after a short delay
       setTimeout(() => {
@@ -644,6 +842,8 @@ import AuthGuard from '../../../components/AuthGuard.astro';
   function getFormData() {
     const form = document.getElementById('post-form') as HTMLFormElement;
     const formData = new FormData(form);
+    const postStatus = document.querySelector('input[name="post_status"]:checked') as HTMLInputElement;
+    const scheduledDate = document.getElementById('scheduled_date') as HTMLInputElement;
     
     return {
       title: formData.get('title') as string,
@@ -651,8 +851,11 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       content: formData.get('content') as string,
       excerpt: formData.get('excerpt') as string,
       tags: formData.get('tags') as string,
+      categories: getSelectedCategories(),
       featured_image: formData.get('featured_image') as string,
-      published: formData.get('published') === 'on'
+      post_status: postStatus?.value || 'draft',
+      scheduled_date: scheduledDate?.value || null,
+      published: postStatus?.value === 'published'
     };
   }
 
@@ -696,18 +899,94 @@ import AuthGuard from '../../../components/AuthGuard.astro';
     const clearImageBtn = document.getElementById('clear-image-btn');
 
     // Auto-generate slug from title
+    let slugManuallyEdited = false;
+    
     titleInput?.addEventListener('input', (e) => {
       const title = (e.target as HTMLInputElement).value;
-      if (title && !slugInput.value) {
+      if (title && !slugManuallyEdited) {
         slugInput.value = generateSlug(title);
       }
     });
+    
+    // Track manual slug editing
+    slugInput?.addEventListener('input', () => {
+      slugManuallyEdited = true;
+    });
+    
+    // Reset slug auto-generation if slug is cleared
+    slugInput?.addEventListener('blur', (e) => {
+      const slugValue = (e.target as HTMLInputElement).value;
+      if (!slugValue.trim()) {
+        slugManuallyEdited = false;
+        if (titleInput?.value) {
+          slugInput.value = generateSlug(titleInput.value);
+        }
+      }
+    });
 
-    // Update publish button text based on checkbox
-    publishedCheckbox?.addEventListener('change', (e) => {
-      const isChecked = (e.target as HTMLInputElement).checked;
-      if (publishBtnText) {
-        publishBtnText.textContent = isChecked ? 'Publish Post' : 'Create Post';
+    // Handle publishing workflow radio buttons
+    const statusRadios = document.querySelectorAll('input[name="post_status"]');
+    const scheduleSection = document.getElementById('schedule-section');
+    const scheduledDateInput = document.getElementById('scheduled_date') as HTMLInputElement;
+    
+    statusRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const value = (e.target as HTMLInputElement).value;
+        
+        // Update button text based on selection
+        if (publishBtnText) {
+          switch (value) {
+            case 'draft':
+              publishBtnText.textContent = 'Save Draft';
+              break;
+            case 'scheduled':
+              publishBtnText.textContent = 'Schedule Post';
+              break;
+            case 'published':
+              publishBtnText.textContent = 'Publish Now';
+              break;
+          }
+        }
+        
+        // Show/hide schedule section
+        if (scheduleSection) {
+          if (value === 'scheduled') {
+            scheduleSection.classList.remove('hidden');
+            // Set default to 1 hour from now
+            if (scheduledDateInput && !scheduledDateInput.value) {
+              const now = new Date();
+              now.setHours(now.getHours() + 1);
+              scheduledDateInput.value = now.toISOString().slice(0, 16);
+            }
+          } else {
+            scheduleSection.classList.add('hidden');
+          }
+        }
+      });
+    });
+    
+    // Make status cards clickable
+    document.getElementById('status-draft')?.addEventListener('click', () => {
+      const radio = document.getElementById('draft') as HTMLInputElement;
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change'));
+      }
+    });
+    
+    document.getElementById('status-scheduled')?.addEventListener('click', () => {
+      const radio = document.getElementById('scheduled') as HTMLInputElement;
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change'));
+      }
+    });
+    
+    document.getElementById('status-published')?.addEventListener('click', () => {
+      const radio = document.getElementById('published') as HTMLInputElement;
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change'));
       }
     });
 
@@ -764,7 +1043,15 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       fileInput?.click();
     });
 
+    let isDragDrop = false;
+
     fileInput?.addEventListener('change', (e) => {
+      // Skip if this change was triggered by drag and drop
+      if (isDragDrop) {
+        isDragDrop = false;
+        return;
+      }
+      
       const files = (e.target as HTMLInputElement).files;
       if (files && files.length > 0) {
         handleFileUpload(files);
@@ -780,20 +1067,24 @@ import AuthGuard from '../../../components/AuthGuard.astro';
     // Drag and drop for upload zone
     uploadZone?.addEventListener('dragover', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       uploadZone.classList.add('border-indigo-500', 'bg-indigo-50');
     });
 
     uploadZone?.addEventListener('dragleave', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       uploadZone.classList.remove('border-indigo-500', 'bg-indigo-50');
     });
 
     uploadZone?.addEventListener('drop', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       uploadZone.classList.remove('border-indigo-500', 'bg-indigo-50');
       
       const files = e.dataTransfer?.files;
       if (files && files.length > 0) {
+        isDragDrop = true;
         handleFileUpload(files);
       }
     });
@@ -802,6 +1093,13 @@ import AuthGuard from '../../../components/AuthGuard.astro';
     saveDraftBtn?.addEventListener('click', async (e) => {
       e.preventDefault();
       if (isSubmitting) return;
+      
+      // Force draft status
+      const draftRadio = document.getElementById('draft') as HTMLInputElement;
+      if (draftRadio) {
+        draftRadio.checked = true;
+        draftRadio.dispatchEvent(new Event('change'));
+      }
       
       const data = getFormData();
       const error = validateForm(data);
@@ -815,7 +1113,7 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       isSubmitting = false;
     });
 
-    // Form submission (publish or create)
+    // Form submission (publish, schedule, or create)
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (isSubmitting) return;
@@ -826,49 +1124,106 @@ import AuthGuard from '../../../components/AuthGuard.astro';
         showError(error);
         return;
       }
+      
+      // Additional validation for scheduled posts
+      if (data.post_status === 'scheduled') {
+        if (!data.scheduled_date) {
+          showError('Please select a date and time for scheduling');
+          return;
+        }
+        
+        const scheduledDate = new Date(data.scheduled_date);
+        const now = new Date();
+        
+        if (scheduledDate <= now) {
+          showError('Scheduled date must be in the future');
+          return;
+        }
+      }
 
       isSubmitting = true;
       await createPost(data, data.published);
       isSubmitting = false;
     });
 
-    // Preview functionality (basic implementation)
-    document.getElementById('preview-btn')?.addEventListener('click', () => {
+    // Load categories on page load
+    loadCategories();
+    
+    // Enhanced Preview functionality
+    document.getElementById('preview-btn')?.addEventListener('click', async () => {
       const data = getFormData();
       if (!data.title || !data.content) {
         showError('Please fill in title and content to preview');
         return;
       }
       
-      // Open preview in new window/tab
-      const previewWindow = window.open('', '_blank');
-      if (previewWindow) {
-        previewWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Preview: ${data.title}</title>
-            <style>
-              body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
-              h1 { color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
-              .meta { color: #6b7280; font-size: 0.875rem; margin-bottom: 2rem; }
-              .content { white-space: pre-wrap; }
-              .featured-image { max-width: 100%; height: auto; margin: 1rem 0; }
-            </style>
-          </head>
-          <body>
-            <h1>${data.title}</h1>
-            <div class="meta">
-              ${data.excerpt ? `<p><strong>Excerpt:</strong> ${data.excerpt}</p>` : ''}
-              ${data.tags ? `<p><strong>Tags:</strong> ${data.tags}</p>` : ''}
-              <p><strong>Status:</strong> ${data.published ? 'Published' : 'Draft'}</p>
-            </div>
-            ${data.featured_image ? `<img src="${data.featured_image}" alt="Featured image" class="featured-image">` : ''}
-            <div class="content">${data.content}</div>
-          </body>
+      // Save as temporary draft for preview
+      try {
+        const tempSlug = data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        
+        const { data: tempPost, error } = await supabase
+          .from('posts')
+          .upsert({
+            title: data.title,
+            slug: tempSlug + '-preview-' + Date.now(),
+            content: data.content,
+            description: data.excerpt,
+            hero_image: data.featured_image,
+            is_draft: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'slug'
+          })
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Error creating preview:', error);
+          showError('Error creating preview. Please try again.');
+          return;
+        }
+        
+        // Open enhanced preview page
+        const previewUrl = `/preview/${tempPost.slug}?token=preview-draft-2024`;
+        window.open(previewUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        
+      } catch (error) {
+        console.error('Preview error:', error);
+        // Fallback to simple preview
+        const previewWindow = window.open('', '_blank');
+        if (previewWindow) {
+          previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Preview: ${data.title}</title>
+              <style>
+                body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+                h1 { color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
+                .meta { color: #6b7280; font-size: 0.875rem; margin-bottom: 2rem; }
+                .content { white-space: pre-wrap; }
+                .featured-image { max-width: 100%; height: auto; margin: 1rem 0; }
+                .preview-notice { background: #fef3c7; border: 1px solid #f59e0b; padding: 1rem; margin-bottom: 2rem; border-radius: 0.5rem; }
+              </style>
+            </head>
+            <body>
+              <div class="preview-notice">
+                <strong>Preview Mode:</strong> This is a basic preview. For full preview experience, please save as draft first.
+              </div>
+              <h1>${data.title}</h1>
+              <div class="meta">
+                ${data.excerpt ? `<p><strong>Excerpt:</strong> ${data.excerpt}</p>` : ''}
+                ${data.tags ? `<p><strong>Tags:</strong> ${data.tags}</p>` : ''}
+                <p><strong>Status:</strong> ${data.published ? 'Published' : 'Draft'}</p>
+              </div>
+              ${data.featured_image ? `<img src="${data.featured_image}" alt="Featured image" class="featured-image">` : ''}
+              <div class="content">${data.content}</div>
+            </body>
           </html>
-        `);
-        previewWindow.document.close();
+          `);
+          previewWindow.document.close();
+        }
       }
     });
   });

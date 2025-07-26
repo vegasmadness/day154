@@ -50,6 +50,7 @@ export interface Database {
           content: string
           hero_image: string | null
           published_at: string | null
+          scheduled_at: string | null
           is_draft: boolean
           author_id: string
           created_at: string
@@ -63,6 +64,7 @@ export interface Database {
           content: string
           hero_image?: string | null
           published_at?: string | null
+          scheduled_at?: string | null
           is_draft?: boolean
           author_id: string
           created_at?: string
@@ -76,6 +78,7 @@ export interface Database {
           content?: string
           hero_image?: string | null
           published_at?: string | null
+          scheduled_at?: string | null
           is_draft?: boolean
           author_id?: string
           created_at?: string
@@ -117,6 +120,49 @@ export interface Database {
         Update: {
           post_id?: string
           tag_id?: string
+        }
+      }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          color: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          color?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          color?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      post_categories: {
+        Row: {
+          post_id: string
+          category_id: string
+        }
+        Insert: {
+          post_id: string
+          category_id: string
+        }
+        Update: {
+          post_id?: string
+          category_id?: string
         }
       }
       likes: {
@@ -271,6 +317,18 @@ export interface Database {
           like_count: number
           comment_count: number
           tags: string[]
+          categories: string[]
+        }[]
+      }
+      get_all_categories: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          color: string
+          post_count: number
         }[]
       }
       search_posts: {
@@ -303,12 +361,15 @@ export interface Database {
 export type User = Database['public']['Tables']['users']['Row']
 export type Post = Database['public']['Tables']['posts']['Row']
 export type Tag = Database['public']['Tables']['tags']['Row']
+export type Category = Database['public']['Tables']['categories']['Row']
 export type Like = Database['public']['Tables']['likes']['Row']
 export type Comment = Database['public']['Tables']['comments']['Row']
 export type Media = Database['public']['Tables']['media']['Row']
 
 export type PostInsert = Database['public']['Tables']['posts']['Insert']
 export type PostUpdate = Database['public']['Tables']['posts']['Update']
+export type CategoryInsert = Database['public']['Tables']['categories']['Insert']
+export type CategoryUpdate = Database['public']['Tables']['categories']['Update']
 export type UserInsert = Database['public']['Tables']['users']['Insert']
 export type UserUpdate = Database['public']['Tables']['users']['Update']
 export type CommentInsert = Database['public']['Tables']['comments']['Insert']
@@ -322,6 +383,7 @@ export interface PostWithStats extends Post {
   like_count: number
   comment_count: number
   tags: Tag[]
+  categories: Category[]
   user_has_liked?: boolean
 }
 

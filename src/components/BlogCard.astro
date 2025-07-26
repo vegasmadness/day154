@@ -132,10 +132,9 @@ const getTagColor = (index: number) => tagColors[index % tagColors.length];
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  /* Focus styles for accessibility */
+  /* Focus styles removed - no outline on focus */
   article:focus-within {
-    outline: 2px solid #ec4899;
-    outline-offset: 2px;
+    outline: none;
   }
   
   /* Enhanced shadow on hover */

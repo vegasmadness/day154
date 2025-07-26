@@ -1,0 +1,153 @@
+---
+import BlogLayout from '../../layouts/BlogLayout.astro';
+import { supabase } from '../../utils/supabase';
+import { marked } from 'marked';
+
+// Get the slug from the URL parameters
+const { slug } = Astro.params;
+
+// Get preview token from query parameters
+const url = new URL(Astro.request.url);
+const previewToken = url.searchParams.get('token');
+
+// Validate preview token (simple implementation)
+if (!previewToken || previewToken !== 'preview-draft-2024') {
+  return Astro.redirect('/404');
+}
+
+// Fetch the specific blog post from Supabase (including drafts)
+const { data: post, error } = await supabase
+  .from('posts')
+  .select('*')
+  .eq('slug', slug)
+  .single();
+
+if (error) {
+  console.error('Error fetching post:', error);
+}
+
+// Handle missing post
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+// Transform post to match expected format
+const transformedPost = {
+  id: post.id,
+  slug: post.slug,
+  data: {
+    title: post.title,
+    description: post.description,
+    pubDate: new Date(post.published_at || post.created_at),
+    updatedDate: post.updated_at ? new Date(post.updated_at) : undefined,
+    heroImage: post.hero_image,
+    tags: [], // TODO: Implement tags from post_tags table
+    draft: post.is_draft
+  },
+  body: post.content || ''
+};
+
+// Calculate reading time and word count
+const wordCount = transformedPost.body.split(/\s+/).length;
+const readingTime = Math.ceil(wordCount / 200);
+
+// Render markdown to HTML
+const htmlContent = marked(transformedPost.body || '');
+
+// Create a Content component that renders HTML
+const Content = () => htmlContent;
+---
+
+<BlogLayout post={transformedPost} Content={Content}>
+  <!-- Preview Banner -->
+  <div slot="preview-banner" class="bg-yellow-50 border-b border-yellow-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          <span class="text-yellow-800 font-medium">
+            {transformedPost.data.draft ? 'Draft Preview' : 'Preview Mode'}
+          </span>
+          <span class="text-yellow-600 ml-2 text-sm">
+            This is a preview of your {transformedPost.data.draft ? 'draft' : 'published'} post
+          </span>
+        </div>
+        <div class="flex items-center space-x-3">
+          <a 
+            href={`/admin/posts/${transformedPost.id}/edit`}
+            class="inline-flex items-center px-3 py-1 border border-yellow-300 text-sm font-medium rounded-md text-yellow-800 bg-yellow-100 hover:bg-yellow-200 transition-colors"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Post
+          </a>
+          <button 
+            onclick="window.close()"
+            class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Close Preview
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced SEO meta tags in head -->
+  <Fragment slot="head">
+    <!-- Prevent indexing of preview pages -->
+    <meta name="robots" content="noindex, nofollow" />
+    
+    <!-- Preview-specific meta tags -->
+    <meta name="preview-mode" content="true" />
+    <meta name="post-status" content={transformedPost.data.draft ? 'draft' : 'published'} />
+    
+    <!-- Open Graph tags for preview -->
+    <meta property="og:title" content={`Preview: ${transformedPost.data.title}`} />
+    <meta property="og:description" content={transformedPost.data.description} />
+    {transformedPost.data.heroImage && (
+      <meta property="og:image" content={transformedPost.data.heroImage} />
+    )}
+    <meta property="og:type" content="article" />
+    
+    <!-- Twitter Card tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`Preview: ${transformedPost.data.title}`} />
+    <meta name="twitter:description" content={transformedPost.data.description} />
+    {transformedPost.data.heroImage && (
+      <meta name="twitter:image" content={transformedPost.data.heroImage} />
+    )}
+  </Fragment>
+</BlogLayout>
+
+<style>
+  /* Preview-specific styles */
+  .preview-banner {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  
+  /* Add subtle preview styling to the content */
+  :global(.preview-mode) {
+    position: relative;
+  }
+  
+  :global(.preview-mode::before) {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 49%, rgba(255, 193, 7, 0.05) 50%, transparent 51%);
+    pointer-events: none;
+    z-index: 1;
+  }
+</style>

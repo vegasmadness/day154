@@ -99,6 +99,15 @@ export const prerender = false;
                     <input type="text" name="tags" id="tags" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="tag1, tag2, tag3">
                     <p class="mt-1 text-sm text-gray-500">Separate tags with commas</p>
                   </div>
+
+                  <!-- Categories -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Categories</label>
+                    <p class="mt-1 text-sm text-gray-600 font-medium">Select one or more of the categories below:</p>
+                    <div id="categories-container" class="flex flex-wrap gap-2">
+                      <!-- Categories will be loaded here -->
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -189,15 +198,62 @@ export const prerender = false;
             <!-- Action Buttons -->
             <div class="bg-white shadow rounded-lg">
               <div class="px-4 py-5 sm:p-6">
+                <!-- Publishing Workflow Section -->
+                <div class="mb-6">
+                  <h3 class="text-lg font-medium text-gray-900 mb-4">Publishing Workflow</h3>
+                  
+                  <!-- Status Selection -->
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50" id="status-draft">
+                      <input type="radio" id="draft" name="post_status" value="draft" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                      <div class="ml-3">
+                        <label for="draft" class="block text-sm font-medium text-gray-900 cursor-pointer">Draft</label>
+                        <p class="text-xs text-gray-500">Save as draft for later editing</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50" id="status-scheduled">
+                      <input type="radio" id="scheduled" name="post_status" value="scheduled" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                      <div class="ml-3">
+                        <label for="scheduled" class="block text-sm font-medium text-gray-900 cursor-pointer">Schedule</label>
+                        <p class="text-xs text-gray-500">Publish at a specific time</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50" id="status-published">
+                      <input type="radio" id="published" name="post_status" value="published" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                      <div class="ml-3">
+                        <label for="published" class="block text-sm font-medium text-gray-900 cursor-pointer">Publish Now</label>
+                        <p class="text-xs text-gray-500">Make live immediately</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Schedule Date/Time (shown when scheduled is selected) -->
+                  <div id="schedule-section" class="hidden mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">Publish Date & Time</label>
+                    <input type="datetime-local" id="scheduled_date" name="scheduled_date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <p class="text-xs text-gray-500 mt-1">The post will be automatically published at this time</p>
+                  </div>
+                  
+                  <!-- Current Status Display -->
+                  <div class="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                      <span class="text-sm font-medium text-gray-700">Current Status:</span>
+                      <span id="current-status-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Draft
+                      </span>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      <span id="status-timestamp">Last updated: --</span>
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-4">
-                    <div class="flex items-center">
-                      <input id="published" name="published" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                      <label for="published" class="ml-2 block text-sm text-gray-900">
-                        Published
-                      </label>
-                    </div>
-                    <p class="text-sm text-gray-500">If unchecked, the post will be saved as a draft.</p>
+                    <!-- Legacy checkbox for backward compatibility -->
+                    <input id="published-legacy" name="published" type="checkbox" class="hidden">
                   </div>
                   
                   <div class="flex items-center space-x-3">
@@ -358,12 +414,13 @@ export const prerender = false;
   import { supabase } from '../../../../utils/supabase';
   import { getMediaFiles, formatFileSize, uploadMedia } from '../../../../utils/media';
 
-  let isSubmitting = false;
   let currentPost: any = null;
+  let isSubmitting = false;
   let mediaFiles: any[] = [];
   let filteredMediaFiles: any[] = [];
   let selectedMedia: any = null;
   let selectedFiles: FileList | null = null;
+  let categories: any[] = [];
 
   // Modal elements
   let mediaLibraryModal: HTMLElement;
@@ -417,7 +474,69 @@ export const prerender = false;
 
   function showSuccess(message: string) {
     hideLoading();
-    alert('Success: ' + message);
+    showToast(message, 'success');
+  }
+
+  function showToast(message: string, type: 'success' | 'error' = 'success') {
+    // Remove any existing toasts
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification fixed top-4 right-4 z-50 max-w-sm w-full transform transition-all duration-300 ease-in-out translate-x-full opacity-0';
+    
+    const bgColor = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+    const iconColor = type === 'success' ? 'text-green-400' : 'text-red-400';
+    const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
+    const icon = type === 'success' 
+      ? '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />'
+      : '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />';
+    
+    toast.innerHTML = `
+      <div class="${bgColor} border rounded-lg shadow-lg p-4">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 ${iconColor}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              ${icon}
+            </svg>
+          </div>
+          <div class="ml-3 flex-1">
+            <p class="text-sm font-medium ${textColor}">${message}</p>
+          </div>
+          <div class="ml-4 flex-shrink-0">
+            <button class="inline-flex ${textColor} hover:${textColor.replace('800', '600')} focus:outline-none" onclick="this.closest('.toast-notification').remove()">
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => {
+      toast.classList.remove('translate-x-full', 'opacity-0');
+      toast.classList.add('translate-x-0', 'opacity-100');
+    }, 10);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 300);
+      }
+    }, 4000);
   }
 
   function formatDate(dateString: string): string {
@@ -564,6 +683,87 @@ export const prerender = false;
     }
   }
 
+  async function loadCategories() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error loading categories:', error);
+        return;
+      }
+      
+      categories = data || [];
+      renderCategories();
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  }
+
+  function renderCategories() {
+    const container = document.getElementById('categories-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Sort categories in the specified order: House, Home, Health
+    const orderedCategories = [...categories].sort((a, b) => {
+      const order = { 'House': 1, 'Home': 2, 'Health': 3 };
+      return (order[a.name] || 999) - (order[b.name] || 999);
+    });
+    
+    orderedCategories.forEach(category => {
+       const choiceChip = document.createElement('div');
+       choiceChip.className = 'choice-chip inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors';
+       choiceChip.dataset.categoryId = category.id;
+       choiceChip.dataset.categoryColor = category.color;
+       choiceChip.textContent = category.name;
+       
+       // Check if this category is already selected for the current post
+       const postCategoryIds = currentPost?.post_categories?.map((pc: any) => pc.categories.id.toString()) || [];
+       const isSelected = postCategoryIds.includes(category.id.toString());
+       
+       if (isSelected) {
+         choiceChip.classList.add('selected');
+         // Selected state: category color background, light gray border, black text
+         choiceChip.style.backgroundColor = category.color;
+         choiceChip.style.borderColor = '#d1d5db';
+         choiceChip.style.color = '#000000';
+       } else {
+         // Unselected state: light gray background and border, black text
+         choiceChip.style.backgroundColor = '#f3f4f6';
+         choiceChip.style.borderColor = '#d1d5db';
+         choiceChip.style.color = '#000000';
+       }
+       
+       // Add click handler for selection
+       choiceChip.addEventListener('click', function() {
+         this.classList.toggle('selected');
+         
+         if (this.classList.contains('selected')) {
+           // Selected state: category color background, light gray border, black text
+           this.style.backgroundColor = category.color;
+           this.style.borderColor = '#d1d5db';
+           this.style.color = '#000000';
+         } else {
+           // Unselected state: light gray background and border, black text
+           this.style.backgroundColor = '#f3f4f6';
+           this.style.borderColor = '#d1d5db';
+           this.style.color = '#000000';
+         }
+       });
+       
+       container.appendChild(choiceChip);
+     });
+  }
+
+  function getSelectedCategories(): string[] {
+    const selectedChips = document.querySelectorAll('.choice-chip.selected') as NodeListOf<HTMLElement>;
+    return Array.from(selectedChips).map(chip => chip.dataset.categoryId || '');
+  }
+
   async function loadPost() {
     try {
       const postId = getPostIdFromUrl();
@@ -571,13 +771,14 @@ export const prerender = false;
         throw new Error('Post ID not found in URL');
       }
 
-      // Fetch post with author and tags
+      // Fetch post with author, tags, and categories
       const { data: post, error: postError } = await supabase
         .from('posts')
         .select(`
           *,
           profiles:author_id(full_name, email),
-          post_tags(tags(name))
+          post_tags(tags(name)),
+          post_categories(categories(id, name, color))
         `)
         .eq('id', postId)
         .single();
@@ -611,11 +812,37 @@ export const prerender = false;
     (document.getElementById('content') as HTMLTextAreaElement).value = post.content || '';
     (document.getElementById('excerpt') as HTMLTextAreaElement).value = post.description || '';
     (document.getElementById('featured_image') as HTMLInputElement).value = post.hero_image || '';
-    (document.getElementById('published') as HTMLInputElement).checked = !post.is_draft;
+    
+    // Set publishing status
+    const isDraft = post.is_draft;
+    const isScheduled = post.scheduled_date && new Date(post.scheduled_date) > new Date();
+    
+    if (isDraft && !isScheduled) {
+      (document.getElementById('draft') as HTMLInputElement).checked = true;
+    } else if (isScheduled) {
+      (document.getElementById('scheduled') as HTMLInputElement).checked = true;
+      (document.getElementById('scheduled_date') as HTMLInputElement).value = 
+        post.scheduled_date ? new Date(post.scheduled_date).toISOString().slice(0, 16) : '';
+      document.getElementById('schedule-section')?.classList.remove('hidden');
+    } else {
+      (document.getElementById('published') as HTMLInputElement).checked = true;
+    }
+    
+    // Legacy checkbox for backward compatibility
+    (document.getElementById('published-legacy') as HTMLInputElement).checked = !post.is_draft;
 
     // Tags
     const tags = post.post_tags?.map((pt: any) => pt.tags.name).join(', ') || '';
     (document.getElementById('tags') as HTMLInputElement).value = tags;
+
+    // Categories - check the appropriate checkboxes
+    const postCategoryIds = post.post_categories?.map((pc: any) => pc.categories.id.toString()) || [];
+    postCategoryIds.forEach((categoryId: string) => {
+      const checkbox = document.getElementById(`category-${categoryId}`) as HTMLInputElement;
+      if (checkbox) {
+        checkbox.checked = true;
+      }
+    });
 
     // Meta information
     const createdAt = document.getElementById('created-at');
@@ -629,12 +856,49 @@ export const prerender = false;
     if (authorName) authorName.textContent = post.profiles?.full_name || post.profiles?.email || 'Unknown';
     
     if (postStatus) {
-      postStatus.textContent = !post.is_draft ? 'Published' : 'Draft';
-      postStatus.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        !post.is_draft 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-yellow-100 text-yellow-800'
-      }`;
+      const isScheduled = post.scheduled_date && new Date(post.scheduled_date) > new Date();
+      let statusText, statusClass;
+      
+      if (!post.is_draft && !isScheduled) {
+        statusText = 'Published';
+        statusClass = 'bg-green-100 text-green-800';
+      } else if (isScheduled) {
+        statusText = 'Scheduled';
+        statusClass = 'bg-blue-100 text-blue-800';
+      } else {
+        statusText = 'Draft';
+        statusClass = 'bg-yellow-100 text-yellow-800';
+      }
+      
+      postStatus.textContent = statusText;
+      postStatus.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`;
+    }
+    
+    // Update current status badge
+    const currentStatusBadge = document.getElementById('current-status-badge');
+    const statusTimestamp = document.getElementById('status-timestamp');
+    
+    if (currentStatusBadge) {
+      const isScheduled = post.scheduled_date && new Date(post.scheduled_date) > new Date();
+      let statusText, statusClass;
+      
+      if (!post.is_draft && !isScheduled) {
+        statusText = 'Published';
+        statusClass = 'bg-green-100 text-green-800';
+      } else if (isScheduled) {
+        statusText = `Scheduled for ${formatDate(post.scheduled_date)}`;
+        statusClass = 'bg-blue-100 text-blue-800';
+      } else {
+        statusText = 'Draft';
+        statusClass = 'bg-yellow-100 text-yellow-800';
+      }
+      
+      currentStatusBadge.textContent = statusText;
+      currentStatusBadge.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`;
+    }
+    
+    if (statusTimestamp) {
+      statusTimestamp.textContent = `Last updated: ${formatDate(post.updated_at)}`;
     }
 
     // Show view post link if published
@@ -660,16 +924,29 @@ export const prerender = false;
       }
 
       // Prepare post data
+      const now = new Date().toISOString();
       const post = {
         title: postData.title,
         slug: postData.slug || generateSlug(postData.title),
         content: postData.content,
         description: postData.excerpt || null,
         hero_image: postData.featured_image || null,
-        is_draft: !postData.published,
-        published_at: postData.published ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString()
+        is_draft: postData.is_draft,
+        scheduled_date: postData.scheduled_date || null,
+        published_at: postData.published && !currentPost?.published_at ? now : currentPost?.published_at,
+        updated_at: now
       };
+      
+      // Handle scheduled publishing
+      if (postData.post_status === 'scheduled' && postData.scheduled_date) {
+        const scheduledTime = new Date(postData.scheduled_date);
+        if (scheduledTime <= new Date()) {
+          // If scheduled time is in the past, publish immediately
+          post.is_draft = false;
+          post.published_at = now;
+          post.scheduled_date = null;
+        }
+      }
 
       // Update the post
       const { error: postError } = await supabase
@@ -720,6 +997,28 @@ export const prerender = false;
           await supabase
             .from('post_tags')
             .insert([{ post_id: postId, tag_id: tagId }]);
+        }
+      }
+
+      // Handle categories - first remove existing categories
+      await supabase
+        .from('post_categories')
+        .delete()
+        .eq('post_id', postId);
+
+      // Add new categories if provided
+      if (postData.categories && postData.categories.length > 0) {
+        const categoryInserts = postData.categories.map((categoryId: string) => ({
+          post_id: postId,
+          category_id: categoryId
+        }));
+        
+        const { error: categoryError } = await supabase
+          .from('post_categories')
+          .insert(categoryInserts);
+        
+        if (categoryError) {
+          console.error('Error adding categories:', categoryError);
         }
       }
 
@@ -778,6 +1077,15 @@ export const prerender = false;
     const form = document.getElementById('post-form') as HTMLFormElement;
     const formData = new FormData(form);
     
+    // Get selected publishing status
+    const postStatus = document.querySelector('input[name="post_status"]:checked') as HTMLInputElement;
+    const scheduledDate = (document.getElementById('scheduled_date') as HTMLInputElement)?.value;
+    
+    const status = postStatus?.value || 'draft';
+    const isDraft = status === 'draft';
+    const isScheduled = status === 'scheduled';
+    const isPublished = status === 'published';
+    
     return {
       title: formData.get('title') as string,
       slug: formData.get('slug') as string,
@@ -785,7 +1093,11 @@ export const prerender = false;
       excerpt: formData.get('excerpt') as string,
       tags: formData.get('tags') as string,
       featured_image: formData.get('featured_image') as string,
-      published: formData.get('published') === 'on'
+      published: isPublished,
+      is_draft: isDraft || isScheduled,
+      scheduled_date: isScheduled ? scheduledDate : null,
+      post_status: status,
+      categories: getSelectedCategories()
     };
   }
 
@@ -804,8 +1116,46 @@ export const prerender = false;
     const form = document.getElementById('post-form') as HTMLFormElement;
     const deleteBtn = document.getElementById('delete-btn');
 
-    // Load post data
+    // Load post data and categories
     loadPost();
+    loadCategories();
+    
+    // Publishing workflow event listeners
+    const statusRadios = document.querySelectorAll('input[name="post_status"]');
+    const scheduleSection = document.getElementById('schedule-section');
+    
+    statusRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.value === 'scheduled') {
+          scheduleSection?.classList.remove('hidden');
+        } else {
+          scheduleSection?.classList.add('hidden');
+        }
+        
+        // Update legacy checkbox for backward compatibility
+        const legacyCheckbox = document.getElementById('published-legacy') as HTMLInputElement;
+        if (legacyCheckbox) {
+          legacyCheckbox.checked = target.value === 'published';
+        }
+      });
+    });
+    
+    // Status card click handlers
+    document.getElementById('status-draft')?.addEventListener('click', () => {
+      (document.getElementById('draft') as HTMLInputElement).checked = true;
+      scheduleSection?.classList.add('hidden');
+    });
+    
+    document.getElementById('status-scheduled')?.addEventListener('click', () => {
+      (document.getElementById('scheduled') as HTMLInputElement).checked = true;
+      scheduleSection?.classList.remove('hidden');
+    });
+    
+    document.getElementById('status-published')?.addEventListener('click', () => {
+      (document.getElementById('published') as HTMLInputElement).checked = true;
+      scheduleSection?.classList.add('hidden');
+    });
 
     // Form submission
     form?.addEventListener('submit', async (e) => {
@@ -834,41 +1184,72 @@ export const prerender = false;
       isSubmitting = false;
     });
 
-    // Preview functionality
-    document.getElementById('preview-btn')?.addEventListener('click', () => {
+    // Enhanced Preview functionality
+    document.getElementById('preview-btn')?.addEventListener('click', async () => {
       const data = getFormData();
       if (!data.title || !data.content) {
         alert('Error: Please fill in title and content to preview');
         return;
       }
       
-      // Open preview in new window/tab
-      const previewWindow = window.open('', '_blank');
-      if (previewWindow) {
-        previewWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Preview: ${data.title}</title>
-            <style>
-              body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
-              h1 { color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
-              .meta { color: #6b7280; font-size: 0.875rem; margin-bottom: 2rem; }
-              .content { white-space: pre-wrap; }
-            </style>
-          </head>
-          <body>
-            <h1>${data.title}</h1>
-            <div class="meta">
-              ${data.excerpt ? `<p><strong>Excerpt:</strong> ${data.excerpt}</p>` : ''}
-              ${data.tags ? `<p><strong>Tags:</strong> ${data.tags}</p>` : ''}
-              <p><strong>Status:</strong> ${data.published ? 'Published' : 'Draft'}</p>
-            </div>
-            <div class="content">${data.content}</div>
-          </body>
-          </html>
-        `);
-        previewWindow.document.close();
+      // Save current changes as draft for preview
+      try {
+        const { error } = await supabase
+          .from('posts')
+          .update({
+            title: data.title,
+            slug: data.slug,
+            content: data.content,
+            description: data.excerpt,
+            hero_image: data.featured_image,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', postId);
+        
+        if (error) {
+          console.error('Error updating post for preview:', error);
+          alert('Error updating post for preview. Please try again.');
+          return;
+        }
+        
+        // Open enhanced preview page
+        const previewUrl = `/preview/${data.slug}?token=preview-draft-2024`;
+        window.open(previewUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        
+      } catch (error) {
+        console.error('Preview error:', error);
+        // Fallback to simple preview
+        const previewWindow = window.open('', '_blank');
+        if (previewWindow) {
+          previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Preview: ${data.title}</title>
+              <style>
+                body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+                h1 { color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
+                .meta { color: #6b7280; font-size: 0.875rem; margin-bottom: 2rem; }
+                .content { white-space: pre-wrap; }
+                .preview-notice { background: #fef3c7; border: 1px solid #f59e0b; padding: 1rem; margin-bottom: 2rem; border-radius: 0.5rem; }
+              </style>
+            </head>
+            <body>
+              <div class="preview-notice">
+                <strong>Preview Mode:</strong> This is a basic preview. Changes have been saved as draft.
+              </div>
+              <h1>${data.title}</h1>
+              <div class="meta">
+                ${data.excerpt ? `<p><strong>Excerpt:</strong> ${data.excerpt}</p>` : ''}
+                ${data.tags ? `<p><strong>Tags:</strong> ${data.tags}</p>` : ''}
+                <p><strong>Status:</strong> ${data.published ? 'Published' : 'Draft'}</p>
+              </div>
+              <div class="content">${data.content}</div>
+            </body>
+            </html>
+          `);
+          previewWindow.document.close();
+        }
       }
     });
 

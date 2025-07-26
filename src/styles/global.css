@@ -69,3 +69,61 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(-1px);
   box-shadow: 0 10px 15px -3px rgba(236, 72, 153, 0.3);
 }
+
+/* Remove focus rings and borders globally while preserving hover effects */
+* {
+  outline: none !important;
+}
+
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: inherit !important;
+}
+
+/* Override Tailwind focus utilities */
+.focus\:outline-none:focus,
+.focus\:ring-1:focus,
+.focus\:ring-2:focus,
+.focus\:ring-indigo-500:focus,
+.focus\:ring-primary-500:focus,
+.focus\:ring-red-500:focus,
+.focus\:ring-blue-500:focus,
+.focus\:ring-offset-2:focus,
+.focus\:border-indigo-500:focus,
+.focus\:border-primary-500:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: inherit !important;
+  --tw-ring-shadow: none !important;
+  --tw-ring-offset-shadow: none !important;
+}
+
+/* Remove focus states from buttons, inputs, and interactive elements */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus,
+a:focus,
+[role="button"]:focus,
+[tabindex]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: inherit !important;
+}
+
+/* Remove focus-within effects that might show borders */
+*:focus-within {
+  outline: none !important;
+}
+
+/* Override any remaining focus ring utilities */
+[class*="focus:ring"]:focus,
+[class*="focus:border"]:focus,
+[class*="focus:outline"]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: inherit !important;
+  --tw-ring-shadow: none !important;
+  --tw-ring-offset-shadow: none !important;
+}

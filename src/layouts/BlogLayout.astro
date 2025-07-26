@@ -47,6 +47,10 @@ const initialLikes = Math.floor(Math.random() * 50) + 5;
 >
   <!-- Pass through any head content -->
   <slot name="head" slot="head" />
+  
+  <!-- Preview Banner (if in preview mode) -->
+  <slot name="preview-banner" />
+  
   <!-- Reading Progress Bar -->
   <ReadingProgress client:load />
   
