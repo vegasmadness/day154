@@ -116,26 +116,46 @@ export const prerender = false;
               </div>
             </div>
 
-            <!-- Publishing Options -->
+            <!-- Image Options -->
             <div class="bg-white shadow rounded-lg">
               <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Publishing Options</h3>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Image Options</h3>
                 
                 <div class="space-y-4">
                   <!-- Featured Image URL -->
                   <div>
                     <label for="featured_image" class="block text-sm font-medium text-gray-700">Featured Image URL</label>
-                    <input type="url" name="featured_image" id="featured_image" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://example.com/image.jpg">
+                    <div class="mt-1 flex space-x-2">
+                      <input type="url" name="featured_image" id="featured_image" class="flex-1 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://example.com/image.jpg">
+                      <button type="button" id="clear-image-btn" class="px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Clear
+                      </button>
+                    </div>
                   </div>
 
-                  <!-- Published Status -->
-                  <div class="flex items-center">
-                    <input id="published" name="published" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="published" class="ml-2 block text-sm text-gray-900">
-                      Published
-                    </label>
+                  <!-- Image Preview -->
+                  <div id="image-preview" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+                    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                      <img id="preview-image" src="" alt="Featured image preview" class="max-w-full h-auto max-h-48 rounded-lg">
+                    </div>
                   </div>
-                  <p class="text-sm text-gray-500">If unchecked, the post will be saved as a draft.</p>
+
+                  <!-- Media Selection Buttons -->
+                  <div class="flex space-x-3">
+                    <button type="button" id="select-from-media-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                      <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      Select from Media Library
+                    </button>
+                    <button type="button" id="upload-new-image-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                      <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                      </svg>
+                      Upload New Image
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -170,6 +190,16 @@ export const prerender = false;
             <div class="bg-white shadow rounded-lg">
               <div class="px-4 py-5 sm:p-6">
                 <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                      <input id="published" name="published" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                      <label for="published" class="ml-2 block text-sm text-gray-900">
+                        Published
+                      </label>
+                    </div>
+                    <p class="text-sm text-gray-500">If unchecked, the post will be saved as a draft.</p>
+                  </div>
+                  
                   <div class="flex items-center space-x-3">
                     <button type="button" id="preview-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                       <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,9 +215,7 @@ export const prerender = false;
                       </svg>
                       View Post
                     </a>
-                  </div>
-                  
-                  <div class="flex items-center space-x-3">
+                    
                     <button type="button" id="delete-btn" class="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                       <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -222,14 +250,132 @@ export const prerender = false;
         </div>
       </div>
     </div>
+
+    <!-- Media Library Modal -->
+    <div id="media-library-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Select from Media Library</h3>
+            <button type="button" id="close-media-modal" class="text-gray-400 hover:text-gray-600">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Search and Filter -->
+          <div class="mb-4 flex space-x-4">
+            <div class="flex-1">
+              <input type="text" id="media-search" placeholder="Search media..." class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <select id="media-filter" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+              <option value="all">All Files</option>
+              <option value="image">Images</option>
+              <option value="video">Videos</option>
+              <option value="audio">Audio</option>
+              <option value="document">Documents</option>
+            </select>
+          </div>
+          
+          <!-- Media Grid -->
+          <div id="media-grid" class="flex flex-wrap justify-center gap-4 max-h-96 overflow-y-auto mb-4">
+            <!-- Media items will be populated here -->
+          </div>
+          
+          <div class="flex justify-end space-x-3">
+            <button type="button" id="cancel-media-selection" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="button" id="confirm-media-selection" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700" disabled>
+              Select Image
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Upload New Image</h3>
+            <button type="button" id="close-upload-modal" class="text-gray-400 hover:text-gray-600">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Upload Zone -->
+          <div id="upload-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
+            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="mt-4">
+              <label for="file-upload" class="cursor-pointer">
+                <span class="mt-2 block text-sm font-medium text-gray-900">
+                  Drop files here or click to upload
+                </span>
+                <input id="file-upload" name="file-upload" type="file" class="sr-only" accept="image/*" multiple>
+              </label>
+              <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB each</p>
+            </div>
+          </div>
+          
+          <!-- Upload Progress -->
+          <div id="upload-progress" class="hidden mt-4">
+            <div class="bg-gray-200 rounded-full h-2">
+              <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="upload-status" class="text-sm text-gray-600 mt-2">Uploading...</p>
+          </div>
+          
+          <!-- Upload Results -->
+          <div id="upload-results" class="hidden mt-4">
+            <h4 class="text-sm font-medium text-gray-900 mb-2">Upload Results:</h4>
+            <div id="results-list" class="space-y-2 max-h-32 overflow-y-auto">
+              <!-- Results will be populated here -->
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-3 mt-6">
+            <button type="button" id="cancel-upload" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="button" id="start-upload" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700" disabled>
+              Upload Files
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </AuthGuard>
 </BaseLayout>
 
 <script>
   import { supabase } from '../../../../utils/supabase';
+  import { getMediaFiles, formatFileSize, uploadMedia } from '../../../../utils/media';
 
   let isSubmitting = false;
   let currentPost: any = null;
+  let mediaFiles: any[] = [];
+  let filteredMediaFiles: any[] = [];
+  let selectedMedia: any = null;
+  let selectedFiles: FileList | null = null;
+
+  // Modal elements
+  let mediaLibraryModal: HTMLElement;
+  let uploadModal: HTMLElement;
+  let mediaGrid: HTMLElement;
+  let uploadZone: HTMLElement;
+  let fileUpload: HTMLInputElement;
+  let uploadProgress: HTMLElement;
+  let uploadResults: HTMLElement;
+  let progressBar: HTMLElement;
+  let uploadStatus: HTMLElement;
+  let resultsList: HTMLElement;
 
   function getPostIdFromUrl(): string | null {
     const pathParts = window.location.pathname.split('/');
@@ -276,6 +422,146 @@ export const prerender = false;
 
   function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleString();
+  }
+
+  async function loadMediaFiles() {
+    try {
+      const files = await getMediaFiles();
+      mediaFiles = files;
+      filteredMediaFiles = files;
+      renderMediaGrid();
+    } catch (error) {
+      console.error('Error loading media files:', error);
+    }
+  }
+
+  function renderMediaGrid() {
+    if (!mediaGrid) return;
+    
+    if (filteredMediaFiles.length === 0) {
+      mediaGrid.innerHTML = '<p class="text-gray-500 text-center py-8">No media files found.</p>';
+      return;
+    }
+    
+    mediaGrid.innerHTML = filteredMediaFiles.map(file => {
+      const isImage = file.file_type?.startsWith('image/');
+      const isSelected = selectedMedia?.id === file.id;
+      
+      return `
+        <div class="media-item cursor-pointer ${isSelected ? 'ring-2 ring-indigo-500' : ''}" data-media-id="${file.id}" style="width: 150px; height: 150px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); transition: all 0.2s; background: white;" onmouseover="this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)'; this.style.transform='translateY(0)'">
+          <div style="width: 100%; height: 100px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f9fafb;">
+            ${isImage 
+              ? `<img src="${file.file_path}" alt="${file.filename}" style="width: 100%; height: 100%; object-fit: cover;">` 
+              : `<div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #f3f4f6; color: #6b7280; font-size: 12px; text-align: center;">${file.file_type || 'File'}</div>`
+            }
+          </div>
+          <div style="padding: 8px; height: 50px; overflow: hidden;">
+            <div style="font-size: 12px; font-weight: 500; color: #374151; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${file.filename}">${file.filename}</div>
+            <div style="font-size: 10px; color: #6b7280;">${formatFileSize(file.file_size || 0)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // Add click event listeners
+    mediaGrid?.querySelectorAll('.media-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const mediaId = item.getAttribute('data-media-id');
+        const media = filteredMediaFiles.find(f => f.id === mediaId);
+        if (media) {
+          selectedMedia = media;
+          renderMediaGrid(); // Re-render to show selection
+          document.getElementById('confirm-media-selection')?.removeAttribute('disabled');
+        }
+      });
+    });
+  }
+
+  function filterMedia() {
+    const searchTerm = (document.getElementById('media-search') as HTMLInputElement)?.value.toLowerCase() || '';
+    const filterType = (document.getElementById('media-filter') as HTMLSelectElement)?.value || 'all';
+    
+    filteredMediaFiles = mediaFiles.filter(file => {
+      const matchesSearch = !searchTerm || 
+        file.filename?.toLowerCase().includes(searchTerm) ||
+        file.original_filename?.toLowerCase().includes(searchTerm);
+      
+      const matchesType = filterType === 'all' || 
+        (filterType === 'image' && file.file_type?.startsWith('image/')) ||
+        (filterType === 'video' && file.file_type?.startsWith('video/')) ||
+        (filterType === 'audio' && file.file_type?.startsWith('audio/')) ||
+        (filterType === 'document' && file.file_type && !file.file_type.startsWith('image/') && !file.file_type.startsWith('video/') && !file.file_type.startsWith('audio/'));
+      
+      return matchesSearch && matchesType;
+    });
+    
+    renderMediaGrid();
+  }
+
+  function resetUploadModal() {
+    selectedFiles = null;
+    uploadProgress?.classList.add('hidden');
+    uploadResults?.classList.add('hidden');
+    if (progressBar) progressBar.style.width = '0%';
+    if (uploadStatus) uploadStatus.textContent = 'Uploading...';
+    if (resultsList) resultsList.innerHTML = '';
+    if (fileUpload) fileUpload.value = '';
+    document.getElementById('start-upload')?.setAttribute('disabled', 'true');
+  }
+
+  async function handleFileUpload() {
+    if (!selectedFiles || selectedFiles.length === 0) return;
+    
+    uploadProgress?.classList.remove('hidden');
+    uploadResults?.classList.remove('hidden');
+    
+    const results = [];
+    let completed = 0;
+    
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      
+      try {
+        if (uploadStatus) uploadStatus.textContent = `Uploading ${file.name}...`;
+        
+        const result = await uploadMedia(file);
+        results.push({ file: file.name, success: true, url: result.file_path });
+        
+      } catch (error) {
+        console.error('Upload error:', error);
+        results.push({ file: file.name, success: false, error: error.message });
+      }
+      
+      completed++;
+      const progress = (completed / selectedFiles.length) * 100;
+      if (progressBar) progressBar.style.width = `${progress}%`;
+    }
+    
+    if (uploadStatus) uploadStatus.textContent = 'Upload complete!';
+    
+    // Display results
+    if (resultsList) resultsList.innerHTML = results.map(result => {
+      if (result.success) {
+        return `<div class="flex items-center text-green-600"><svg class="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>${result.file} uploaded successfully</div>`;
+      } else {
+        return `<div class="flex items-center text-red-600"><svg class="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>${result.file}: ${result.error}</div>`;
+      }
+    }).join('');
+    
+    // Reload media files to show new uploads
+    await loadMediaFiles();
+  }
+
+  function updateImagePreview(imageUrl: string) {
+    const featuredImageInput = document.getElementById('featured_image') as HTMLInputElement;
+    const imagePreview = document.getElementById('image-preview');
+    const previewImage = document.getElementById('preview-image') as HTMLImageElement;
+    
+    if (featuredImageInput && imagePreview && previewImage) {
+      featuredImageInput.value = imageUrl;
+      previewImage.src = imageUrl;
+      imagePreview.classList.remove('hidden');
+    }
   }
 
   async function loadPost() {
@@ -439,9 +725,9 @@ export const prerender = false;
 
       showSuccess('Post updated successfully!');
       
-      // Reload the post data
+      // Redirect to manage posts page
       setTimeout(() => {
-        window.location.reload();
+        window.location.href = '/admin/posts';
       }, 1500);
 
     } catch (error) {
@@ -585,5 +871,139 @@ export const prerender = false;
         previewWindow.document.close();
       }
     });
+
+    // Initialize all modal elements
+    mediaLibraryModal = document.getElementById('media-library-modal');
+    uploadModal = document.getElementById('upload-modal');
+    mediaGrid = document.getElementById('media-grid');
+    uploadZone = document.getElementById('upload-zone');
+    fileUpload = document.getElementById('file-upload') as HTMLInputElement;
+    uploadProgress = document.getElementById('upload-progress');
+    uploadResults = document.getElementById('upload-results');
+    progressBar = document.getElementById('progress-bar');
+    uploadStatus = document.getElementById('upload-status');
+    resultsList = document.getElementById('results-list');
+    
+    // Get other elements
+    const selectMediaBtn = document.getElementById('select-from-media-btn');
+    const uploadMediaBtn = document.getElementById('upload-new-image-btn');
+    const closeMediaModalBtn = document.getElementById('close-media-modal');
+    const closeUploadModalBtn = document.getElementById('close-upload-modal');
+    const clearImageBtn = document.getElementById('clear-image-btn');
+    const mediaSearchInput = document.getElementById('media-search');
+    const mediaTypeFilter = document.getElementById('media-filter');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImage = document.getElementById('preview-image');
+    const featuredImageInput = document.getElementById('featured_image') as HTMLInputElement;
+
+    // Initialize media library
+    loadMediaFiles();
+
+    // Modal event listeners
+    selectMediaBtn?.addEventListener('click', () => {
+      mediaLibraryModal.classList.remove('hidden');
+      loadMediaFiles();
+    });
+
+    uploadMediaBtn?.addEventListener('click', () => {
+      uploadModal.classList.remove('hidden');
+      resetUploadModal();
+    });
+
+    closeMediaModalBtn?.addEventListener('click', () => {
+      mediaLibraryModal.classList.add('hidden');
+    });
+
+    closeUploadModalBtn?.addEventListener('click', () => {
+      uploadModal.classList.add('hidden');
+    });
+
+    clearImageBtn?.addEventListener('click', () => {
+      featuredImageInput.value = '';
+      imagePreview.classList.add('hidden');
+      selectedMedia = null;
+    });
+
+    // Search and filter
+    mediaSearchInput?.addEventListener('input', filterMedia);
+    mediaTypeFilter?.addEventListener('change', filterMedia);
+
+    // Media library modal buttons
+    document.getElementById('cancel-media-selection')?.addEventListener('click', () => {
+      mediaLibraryModal.classList.add('hidden');
+      selectedMedia = null;
+    });
+
+    document.getElementById('confirm-media-selection')?.addEventListener('click', () => {
+      if (selectedMedia) {
+        featuredImageInput.value = selectedMedia.file_path;
+        previewImage.src = selectedMedia.file_path;
+        imagePreview.classList.remove('hidden');
+        mediaLibraryModal.classList.add('hidden');
+      }
+    });
+
+    // Upload modal buttons
+    document.getElementById('cancel-upload')?.addEventListener('click', () => {
+      uploadModal.classList.add('hidden');
+    });
+
+    document.getElementById('start-upload')?.addEventListener('click', async () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        selectedFiles = fileInput.files;
+        await handleFileUpload();
+        // Reload media library after upload
+        await loadMediaFiles();
+      }
+    });
+
+    // Drag and drop
+    dropZone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-blue-500', 'bg-blue-50');
+    });
+
+    dropZone?.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+
+    dropZone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        fileInput.files = files;
+        const event = new Event('change', { bubbles: true });
+        fileInput.dispatchEvent(event);
+      }
+    });
+
+    // File input change
+    fileInput?.addEventListener('change', (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        document.getElementById('start-upload')?.removeAttribute('disabled');
+      } else {
+        document.getElementById('start-upload')?.setAttribute('disabled', 'true');
+      }
+    });
+
+    // Image preview update
+    featuredImageInput?.addEventListener('input', () => {
+      const imageUrl = featuredImageInput.value;
+      if (imageUrl) {
+        previewImage.src = imageUrl;
+        imagePreview.classList.remove('hidden');
+      } else {
+        imagePreview.classList.add('hidden');
+      }
+    });
+
+    // Initial image preview
+    if (featuredImageInput?.value) {
+      previewImage.src = featuredImageInput.value;
+      imagePreview.classList.remove('hidden');
+    }
   });
 </script>

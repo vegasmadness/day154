@@ -35,6 +35,71 @@ import AuthGuard from '../../components/AuthGuard.astro';
       <!-- Hidden File Input -->
       <input id="file-upload" name="file-upload" type="file" class="hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt">
 
+      <!-- Upload Zone Modal -->
+      <div id="upload-zone-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+          <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 border-b">
+              <h3 class="text-lg font-medium text-gray-900">Upload Media Files</h3>
+              <button id="close-upload-modal" class="text-gray-400 hover:text-gray-600">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Upload Zone -->
+            <div class="mt-6">
+              <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="mt-4">
+                  <p class="text-lg font-medium text-gray-900">Drop files here to upload</p>
+                  <p class="mt-2 text-sm text-gray-500">or click to browse your computer</p>
+                </div>
+                <div class="mt-6">
+                  <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Choose Files
+                  </button>
+                </div>
+                <div class="mt-4 text-xs text-gray-500">
+                  <p>Supported formats: Images (JPG, PNG, GIF, WebP), Documents (PDF, DOC, DOCX, TXT)</p>
+                  <p>Maximum file size: 10MB per file</p>
+                </div>
+              </div>
+
+              <!-- Upload Progress -->
+              <div id="upload-progress" class="hidden mt-6">
+                <div class="bg-gray-200 rounded-full h-2">
+                  <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="upload-status" class="mt-2 text-sm text-gray-600">Uploading files...</p>
+              </div>
+
+              <!-- Upload Results -->
+              <div id="upload-results" class="hidden mt-6">
+                <div class="space-y-2" id="upload-results-list">
+                  <!-- Upload results will be inserted here -->
+                </div>
+                <div class="mt-4 flex justify-end space-x-3">
+                  <button id="upload-another" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Upload More
+                  </button>
+                  <button id="close-upload-complete" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Filters and Search -->
       <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
@@ -445,13 +510,47 @@ import AuthGuard from '../../components/AuthGuard.astro';
     // Load media files
     loadMediaFiles();
 
-    // Upload button - directly trigger file input
+    // Upload button - show upload modal
     document.getElementById('upload-btn')?.addEventListener('click', () => {
-      document.getElementById('file-upload')?.click();
+      document.getElementById('upload-zone-modal')?.classList.remove('hidden');
     });
     document.getElementById('empty-upload-btn')?.addEventListener('click', () => {
+      document.getElementById('upload-zone-modal')?.classList.remove('hidden');
+    });
+
+    // Upload modal event listeners
+    document.getElementById('close-upload-modal')?.addEventListener('click', () => {
+      document.getElementById('upload-zone-modal')?.classList.add('hidden');
+      resetUploadModal();
+    });
+
+    document.getElementById('close-upload-complete')?.addEventListener('click', () => {
+      document.getElementById('upload-zone-modal')?.classList.add('hidden');
+      resetUploadModal();
+      loadMediaFiles(); // Refresh the media grid
+    });
+
+    document.getElementById('upload-another')?.addEventListener('click', () => {
+      resetUploadModal();
+    });
+
+    // Drop zone click handler
+    document.getElementById('drop-zone')?.addEventListener('click', () => {
       document.getElementById('file-upload')?.click();
     });
+
+    // Reset upload modal to initial state
+    function resetUploadModal() {
+      document.getElementById('upload-progress')?.classList.add('hidden');
+      document.getElementById('upload-results')?.classList.add('hidden');
+      document.getElementById('drop-zone')?.classList.remove('hidden');
+      const progressBar = document.getElementById('progress-bar');
+      if (progressBar) progressBar.style.width = '0%';
+      const resultsList = document.getElementById('upload-results-list');
+      if (resultsList) resultsList.innerHTML = '';
+      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+    }
 
     // Search and filters
     document.getElementById('search')?.addEventListener('input', () => filterAndSortFiles());
@@ -483,24 +582,42 @@ import AuthGuard from '../../components/AuthGuard.astro';
       const mediaGrid = document.getElementById('media-grid');
       const container = document.getElementById('media-container');
       const emptyState = document.getElementById('empty-state');
+      const uploadProgress = document.getElementById('upload-progress');
+      const uploadResults = document.getElementById('upload-results');
+      const dropZone = document.getElementById('drop-zone');
+      const progressBar = document.getElementById('progress-bar');
+      const uploadStatus = document.getElementById('upload-status');
+      const resultsList = document.getElementById('upload-results-list');
       
       if (!container) return;
+      
+      // Show upload progress and hide drop zone
+      if (dropZone) dropZone.classList.add('hidden');
+      if (uploadProgress) uploadProgress.classList.remove('hidden');
+      if (uploadResults) uploadResults.classList.add('hidden');
       
       // Show media grid if it was hidden
       if (mediaGrid) mediaGrid.classList.remove('hidden');
       if (emptyState) emptyState.classList.add('hidden');
       
+      const results: Array<{filename: string, success: boolean, error?: string}> = [];
+      
       // Process each file
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const tempId = `temp-${Date.now()}-${i}`;
-        
-        // Validate file
-        const validation = validateFile(file);
-        if (!validation.valid) {
-          alert(`Invalid file: ${file.name}. ${validation.error}`);
-          continue;
-        }
+         for (let i = 0; i < files.length; i++) {
+           const file = files[i];
+           const tempId = `temp-${Date.now()}-${i}`;
+           
+           // Update progress
+           const progress = ((i + 1) / files.length) * 100;
+           if (progressBar) progressBar.style.width = `${progress}%`;
+           if (uploadStatus) uploadStatus.textContent = `Uploading ${file.name}... (${i + 1}/${files.length})`;
+           
+           // Validate file
+           const validation = validateFile(file);
+           if (!validation.valid) {
+             results.push({filename: file.name, success: false, error: validation.error});
+             continue;
+           }
         
         // Immediately add loading thumbnail to the grid
         const loadingThumbnail = createLoadingMediaItem(file.name, tempId);
@@ -516,6 +633,8 @@ import AuthGuard from '../../components/AuthGuard.astro';
             if (loadingElement) {
               loadingElement.remove();
             }
+            
+            results.push({filename: file.name, success: true});
             
             // Add the actual media item
             const mediaItem = await createMediaItem({
@@ -582,7 +701,7 @@ import AuthGuard from '../../components/AuthGuard.astro';
             if (loadingElement) {
               loadingElement.remove();
             }
-            alert(`Upload failed for ${file.name}: ${result.error}`);
+            results.push({filename: file.name, success: false, error: result.error});
           }
         } catch (error) {
           // Remove loading thumbnail and show error
@@ -590,8 +709,21 @@ import AuthGuard from '../../components/AuthGuard.astro';
           if (loadingElement) {
             loadingElement.remove();
           }
-          alert(`Upload failed for ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          results.push({filename: file.name, success: false, error: error instanceof Error ? error.message : 'Unknown error'});
         }
+      }
+      
+      // Show upload results
+      if (uploadProgress) uploadProgress.classList.add('hidden');
+      if (uploadResults) uploadResults.classList.remove('hidden');
+      
+      if (resultsList) {
+        resultsList.innerHTML = results.map(result => `
+          <div class="flex items-center justify-between p-2 rounded ${result.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}">
+            <span class="text-sm">${result.filename}</span>
+            <span class="text-xs">${result.success ? 'Success' : result.error}</span>
+          </div>
+        `).join('');
       }
       
       // Reset file input
@@ -608,7 +740,30 @@ import AuthGuard from '../../components/AuthGuard.astro';
         }
       });
 
-      // Drag and drop on the entire page
+      // Drag and drop on the drop zone
+      const dropZone = document.getElementById('drop-zone');
+      if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.classList.add('border-indigo-400', 'bg-indigo-50');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('border-indigo-400', 'bg-indigo-50');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('border-indigo-400', 'bg-indigo-50');
+          const files = e.dataTransfer?.files;
+          if (files && files.length > 0) {
+            handleFileUpload(files);
+          }
+        });
+      }
+
+      // Drag and drop on the entire page (fallback)
       document.addEventListener('dragover', (e) => {
         e.preventDefault();
       });
@@ -617,6 +772,11 @@ import AuthGuard from '../../components/AuthGuard.astro';
         e.preventDefault();
         const files = e.dataTransfer?.files;
         if (files && files.length > 0) {
+          // Show modal if not already visible
+          const modal = document.getElementById('upload-zone-modal');
+          if (modal && modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+          }
           handleFileUpload(files);
         }
       });

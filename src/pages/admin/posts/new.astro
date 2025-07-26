@@ -78,26 +78,51 @@ import AuthGuard from '../../../components/AuthGuard.astro';
               </div>
             </div>
 
-            <!-- Publishing Options -->
+            <!-- Image Options -->
             <div class="bg-white shadow rounded-lg">
               <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Publishing Options</h3>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Image Options</h3>
                 
                 <div class="space-y-4">
                   <!-- Featured Image URL -->
                   <div>
                     <label for="featured_image" class="block text-sm font-medium text-gray-700">Featured Image URL</label>
-                    <input type="url" name="featured_image" id="featured_image" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://example.com/image.jpg">
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                      <input type="url" name="featured_image" id="featured_image" class="flex-1 block w-full border border-gray-300 rounded-l-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://example.com/image.jpg">
+                      <button type="button" id="clear-image-btn" class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
-                  <!-- Published Status -->
-                  <div class="flex items-center">
-                    <input id="published" name="published" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="published" class="ml-2 block text-sm text-gray-900">
-                      Publish immediately
-                    </label>
+                  <!-- Image Preview -->
+                  <div id="image-preview" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+                    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                      <img id="preview-image" src="" alt="Featured image preview" class="max-w-full h-auto max-h-48 rounded-lg">
+                    </div>
                   </div>
-                  <p class="text-sm text-gray-500">If unchecked, the post will be saved as a draft.</p>
+
+                  <!-- Image Selection Buttons -->
+                  <div class="flex space-x-3">
+                    <button type="button" id="select-from-library-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                      <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      Select from Media Library
+                    </button>
+                    
+                    <button type="button" id="upload-new-image-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                      <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      Upload New Image
+                    </button>
+                  </div>
+
+
                 </div>
               </div>
             </div>
@@ -105,6 +130,17 @@ import AuthGuard from '../../../components/AuthGuard.astro';
             <!-- Action Buttons -->
             <div class="bg-white shadow rounded-lg">
               <div class="px-4 py-5 sm:p-6">
+                <!-- Publishing Options -->
+                <div class="mb-6">
+                  <div class="flex items-center">
+                    <input id="published" name="published" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="published" class="ml-2 block text-sm text-gray-900">
+                      Publish immediately
+                    </label>
+                  </div>
+                  <p class="mt-1 text-sm text-gray-500">If unchecked, the post will be saved as a draft.</p>
+                </div>
+
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-3">
                     <button type="button" id="preview-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
@@ -151,6 +187,108 @@ import AuthGuard from '../../../components/AuthGuard.astro';
         </div>
       </div>
     </div>
+
+    <!-- Media Library Modal -->
+    <div id="media-library-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Select Image from Media Library</h3>
+            <button type="button" id="close-media-modal" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Search and Filter -->
+          <div class="mb-4 flex space-x-4">
+            <div class="flex-1">
+              <input type="text" id="media-search" placeholder="Search media..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <select id="media-filter" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="all">All Types</option>
+              <option value="image">Images</option>
+              <option value="video">Videos</option>
+              <option value="document">Documents</option>
+            </select>
+          </div>
+          
+          <!-- Media Grid -->
+          <div id="media-grid" class="flex flex-wrap gap-4 mb-4 max-h-96 overflow-y-auto justify-center">
+            <!-- Media items will be loaded here -->
+          </div>
+          
+          <!-- Modal Actions -->
+          <div class="flex justify-end space-x-3">
+            <button type="button" id="cancel-media-selection" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="button" id="select-media-btn" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50" disabled>
+              Select Image
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Upload New Image</h3>
+            <button type="button" id="close-upload-modal" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Upload Zone -->
+          <div id="upload-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="mt-4">
+              <p class="text-sm text-gray-600">Drag and drop your image here, or</p>
+              <button type="button" id="choose-file-btn" class="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                Choose File
+              </button>
+              <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
+            </div>
+            <p class="mt-2 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+          </div>
+          
+          <!-- Upload Progress -->
+          <div id="upload-progress" class="mt-4 hidden">
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span id="upload-status">Uploading...</span>
+                <span id="upload-percentage">0%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="upload-progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Upload Results -->
+          <div id="upload-results" class="mt-4 hidden">
+            <h4 class="text-sm font-medium text-gray-900 mb-2">Upload Results</h4>
+            <div id="upload-results-list" class="space-y-2"></div>
+            <div class="mt-4 flex justify-end space-x-3">
+              <button type="button" id="upload-another-btn" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Upload Another
+              </button>
+              <button type="button" id="close-upload-results" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </AuthGuard>
 </BaseLayout>
 
@@ -158,6 +296,8 @@ import AuthGuard from '../../../components/AuthGuard.astro';
   import { supabase } from '../../../utils/supabase';
 
   let isSubmitting = false;
+  let selectedMedia = null;
+  let mediaFiles = [];
 
   function generateSlug(title: string): string {
     return title
@@ -184,6 +324,239 @@ import AuthGuard from '../../../components/AuthGuard.astro';
   function showSuccess(message: string) {
     hideLoading();
     alert('Success: ' + message);
+  }
+
+  // Media Library Functions
+  async function loadMediaFiles() {
+    try {
+      const { getMediaFiles } = await import('../../../utils/media');
+      const result = await getMediaFiles();
+      
+      if (result.success && result.media) {
+        mediaFiles = result.media.map(media => ({
+          id: media.id,
+          filename: media.filename,
+          original_filename: media.original_filename,
+          file_path: media.file_path,
+          file_size: media.file_size,
+          mime_type: media.mime_type,
+          width: media.width,
+          height: media.height,
+          alt_text: media.alt_text,
+          caption: media.caption,
+          created_at: media.created_at,
+          updated_at: media.updated_at
+        }));
+      } else {
+        console.error('Error loading media files:', result.error);
+        mediaFiles = [];
+      }
+      
+      renderMediaGrid(mediaFiles);
+    } catch (error) {
+      console.error('Error loading media files:', error);
+    }
+  }
+
+  async function renderMediaGrid(files: any[]) {
+    const mediaGrid = document.getElementById('media-grid');
+    if (!mediaGrid) return;
+    
+    mediaGrid.innerHTML = '';
+    
+    if (files.length === 0) {
+      mediaGrid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No media files found</div>';
+      return;
+    }
+
+    const { formatFileSize } = await import('../../../utils/media');
+
+    for (const file of files) {
+      const mediaItem = document.createElement('div');
+      mediaItem.className = 'media-item cursor-pointer';
+      mediaItem.dataset.fileId = file.id;
+      mediaItem.dataset.fileUrl = file.file_path;
+      
+      // Apply the same styling as the main media gallery
+      mediaItem.style.cssText = `
+        background: #e5e7eb;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 0;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.2s ease, transform 0.1s ease;
+        width: 180px;
+      `;
+      
+      mediaItem.onmouseover = function() {
+        this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        this.style.transform = 'translateY(-1px)';
+      };
+      
+      mediaItem.onmouseout = function() {
+        this.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+        this.style.transform = 'translateY(0)';
+      };
+      
+      const isImage = file.mime_type?.startsWith('image/');
+      const formattedSize = await formatFileSize(file.file_size || 0);
+      
+      mediaItem.innerHTML = `
+        <div style="width: 178px; height: 150px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f9fafb;">
+          ${isImage 
+            ? `<img src="${file.file_path}" alt="${file.alt_text || file.filename}" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;" onerror="console.error('Failed to load image:', '${file.file_path}');" onload="console.log('Successfully loaded image:', '${file.file_path}');">` 
+            : `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; color: #6b7280;">
+                 <svg style="width: 32px; height: 32px; margin-bottom: 8px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                 </svg>
+               </div>`
+          }
+        </div>
+        <div style="padding: 8px; text-align: center;">
+          <div style="font-size: 11px; color: #6b7280;">${formattedSize}</div>
+        </div>
+      `;
+      
+      mediaItem.addEventListener('click', () => {
+        // Remove previous selection
+        document.querySelectorAll('.media-selected').forEach(el => {
+          el.classList.remove('media-selected', 'border-indigo-500');
+        });
+        
+        // Add selection to current item
+        mediaItem.classList.add('media-selected', 'border-indigo-500');
+        selectedMedia = file;
+        const selectBtn = document.getElementById('select-media-btn') as HTMLButtonElement;
+        if (selectBtn) selectBtn.disabled = false;
+      });
+      
+      mediaGrid.appendChild(mediaItem);
+    }
+  }
+
+  function filterMediaFiles() {
+    const searchInput = document.getElementById('media-search') as HTMLInputElement;
+    const filterSelect = document.getElementById('media-filter') as HTMLSelectElement;
+    
+    if (!searchInput || !filterSelect) return;
+    
+    const searchTerm = searchInput.value.toLowerCase();
+    const filterType = filterSelect.value;
+    
+    const filteredFiles = mediaFiles.filter(file => {
+      const matchesSearch = file.filename.toLowerCase().includes(searchTerm) || 
+                           file.original_filename?.toLowerCase().includes(searchTerm);
+      const matchesFilter = filterType === 'all' || file.mime_type?.startsWith(filterType + '/');
+      return matchesSearch && matchesFilter;
+    });
+    
+    renderMediaGrid(filteredFiles);
+  }
+
+  // Upload Functions
+  function resetUploadModal() {
+    const uploadProgress = document.getElementById('upload-progress');
+    const uploadResults = document.getElementById('upload-results');
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    
+    uploadProgress?.classList.add('hidden');
+    uploadResults?.classList.add('hidden');
+    uploadZone?.classList.remove('hidden');
+    if (fileInput) fileInput.value = '';
+  }
+
+  async function handleFileUpload(files: FileList) {
+    const fileArray = Array.from(files);
+    const results = [];
+    
+    // Show progress
+    const uploadZone = document.getElementById('upload-zone');
+    const uploadProgress = document.getElementById('upload-progress');
+    
+    uploadZone?.classList.add('hidden');
+    uploadProgress?.classList.remove('hidden');
+    
+    const { uploadMedia } = await import('../../../utils/media');
+    
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      const progress = ((i + 1) / fileArray.length) * 100;
+      
+      const statusEl = document.getElementById('upload-status');
+      const percentageEl = document.getElementById('upload-percentage');
+      const progressBar = document.getElementById('upload-progress-bar');
+      
+      if (statusEl) statusEl.textContent = `Uploading ${file.name}...`;
+      if (percentageEl) percentageEl.textContent = `${Math.round(progress)}%`;
+      if (progressBar) progressBar.style.width = `${progress}%`;
+      
+      try {
+        const result = await uploadMedia(file);
+        
+        if (result.success && result.media) {
+          results.push({ filename: file.name, success: true, url: result.media.file_path, media: result.media });
+        } else {
+          throw new Error(result.error || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        results.push({ filename: file.name, success: false, error: error.message });
+      }
+    }
+    
+    // Show results
+    uploadProgress?.classList.add('hidden');
+    const uploadResults = document.getElementById('upload-results');
+    uploadResults?.classList.remove('hidden');
+    
+    const resultsList = document.getElementById('upload-results-list');
+    if (resultsList) {
+      resultsList.innerHTML = '';
+      
+      results.forEach(result => {
+        const resultItem = document.createElement('div');
+        resultItem.className = `flex items-center justify-between p-2 rounded ${result.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`;
+        resultItem.innerHTML = `
+          <span class="text-sm">${result.filename}</span>
+          <span class="text-xs">${result.success ? 'Success' : 'Failed'}</span>
+        `;
+        resultsList.appendChild(resultItem);
+      });
+    }
+    
+    // If there's a successful upload, set it as the featured image
+    const successfulUpload = results.find(r => r.success);
+    if (successfulUpload) {
+      const featuredImageInput = document.getElementById('featured_image') as HTMLInputElement;
+      if (featuredImageInput) {
+        featuredImageInput.value = successfulUpload.url;
+        updateImagePreview(successfulUpload.url);
+      }
+      
+      // Refresh media files list
+      loadMediaFiles();
+      
+      // Close modal after a short delay
+      setTimeout(() => {
+        const uploadModal = document.getElementById('upload-modal');
+        uploadModal?.classList.add('hidden');
+        resetUploadModal();
+      }, 2000);
+    }
+  }
+
+  function updateImagePreview(url: string) {
+    const preview = document.getElementById('image-preview');
+    const previewImage = document.getElementById('preview-image') as HTMLImageElement;
+    
+    if (url && preview && previewImage) {
+      previewImage.src = url;
+      preview.classList.remove('hidden');
+    } else if (preview) {
+      preview.classList.add('hidden');
+    }
   }
 
   async function createPost(postData: any, published: boolean = false) {
@@ -302,6 +675,25 @@ import AuthGuard from '../../../components/AuthGuard.astro';
     const publishBtn = document.getElementById('publish-btn');
     const publishBtnText = document.getElementById('publish-btn-text');
     const publishedCheckbox = document.getElementById('published') as HTMLInputElement;
+    const featuredImageInput = document.getElementById('featured_image') as HTMLInputElement;
+
+    // Media library elements
+    const selectFromLibraryBtn = document.getElementById('select-from-library-btn');
+    const uploadNewImageBtn = document.getElementById('upload-new-image-btn');
+    const mediaLibraryModal = document.getElementById('media-library-modal');
+    const uploadModal = document.getElementById('upload-modal');
+    const closeMediaModal = document.getElementById('close-media-modal');
+    const cancelMediaSelection = document.getElementById('cancel-media-selection');
+    const closeUploadModal = document.getElementById('close-upload-modal');
+    const mediaSearch = document.getElementById('media-search') as HTMLInputElement;
+    const mediaFilter = document.getElementById('media-filter') as HTMLSelectElement;
+    const selectMediaBtn = document.getElementById('select-media-btn');
+    const chooseFileBtn = document.getElementById('choose-file-btn');
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    const uploadZone = document.getElementById('upload-zone');
+    const uploadAnotherBtn = document.getElementById('upload-another-btn');
+    const closeUploadResults = document.getElementById('close-upload-results');
+    const clearImageBtn = document.getElementById('clear-image-btn');
 
     // Auto-generate slug from title
     titleInput?.addEventListener('input', (e) => {
@@ -316,6 +708,93 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       const isChecked = (e.target as HTMLInputElement).checked;
       if (publishBtnText) {
         publishBtnText.textContent = isChecked ? 'Publish Post' : 'Create Post';
+      }
+    });
+
+    // Featured image preview
+    featuredImageInput?.addEventListener('input', (e) => {
+      const url = (e.target as HTMLInputElement).value;
+      updateImagePreview(url);
+    });
+
+    // Clear image button
+    clearImageBtn?.addEventListener('click', () => {
+      if (featuredImageInput) {
+        featuredImageInput.value = '';
+        updateImagePreview('');
+      }
+    });
+
+    // Media library modal
+    selectFromLibraryBtn?.addEventListener('click', () => {
+      mediaLibraryModal?.classList.remove('hidden');
+      loadMediaFiles();
+    });
+
+    uploadNewImageBtn?.addEventListener('click', () => {
+      uploadModal?.classList.remove('hidden');
+      resetUploadModal();
+    });
+
+    closeMediaModal?.addEventListener('click', () => {
+      mediaLibraryModal?.classList.add('hidden');
+    });
+
+    cancelMediaSelection?.addEventListener('click', () => {
+      mediaLibraryModal?.classList.add('hidden');
+    });
+
+    closeUploadModal?.addEventListener('click', () => {
+      uploadModal?.classList.add('hidden');
+      resetUploadModal();
+    });
+
+    selectMediaBtn?.addEventListener('click', () => {
+      if (selectedMedia && featuredImageInput) {
+        featuredImageInput.value = selectedMedia.file_path;
+        updateImagePreview(selectedMedia.file_path);
+        mediaLibraryModal?.classList.add('hidden');
+      }
+    });
+
+    mediaSearch?.addEventListener('input', filterMediaFiles);
+    mediaFilter?.addEventListener('change', filterMediaFiles);
+
+    chooseFileBtn?.addEventListener('click', () => {
+      fileInput?.click();
+    });
+
+    fileInput?.addEventListener('change', (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        handleFileUpload(files);
+      }
+    });
+
+    uploadAnotherBtn?.addEventListener('click', resetUploadModal);
+    closeUploadResults?.addEventListener('click', () => {
+      uploadModal?.classList.add('hidden');
+      resetUploadModal();
+    });
+
+    // Drag and drop for upload zone
+    uploadZone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('border-indigo-500', 'bg-indigo-50');
+    });
+
+    uploadZone?.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+    });
+
+    uploadZone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+      
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        handleFileUpload(files);
       }
     });
 
@@ -374,6 +853,7 @@ import AuthGuard from '../../../components/AuthGuard.astro';
               h1 { color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
               .meta { color: #6b7280; font-size: 0.875rem; margin-bottom: 2rem; }
               .content { white-space: pre-wrap; }
+              .featured-image { max-width: 100%; height: auto; margin: 1rem 0; }
             </style>
           </head>
           <body>
@@ -383,6 +863,7 @@ import AuthGuard from '../../../components/AuthGuard.astro';
               ${data.tags ? `<p><strong>Tags:</strong> ${data.tags}</p>` : ''}
               <p><strong>Status:</strong> ${data.published ? 'Published' : 'Draft'}</p>
             </div>
+            ${data.featured_image ? `<img src="${data.featured_image}" alt="Featured image" class="featured-image">` : ''}
             <div class="content">${data.content}</div>
           </body>
           </html>
