@@ -35,6 +35,33 @@ if (postsError) {
   console.error('Error fetching category posts:', postsError);
 }
 
+// Fetch all post-tag relationships for the category posts
+const postIds = categoryPosts?.map(post => post.id) || [];
+const { data: allPostTags, error: tagsError } = await supabase
+  .from('post_tags')
+  .select(`
+    post_id,
+    tags (
+      id,
+      name,
+      slug
+    )
+  `)
+  .in('post_id', postIds);
+
+if (tagsError) {
+  console.error('Error fetching post tags:', tagsError);
+}
+
+// Create a map of post ID to tags for efficient lookup
+const postTagsMap = new Map();
+allPostTags?.forEach(pt => {
+  if (!postTagsMap.has(pt.post_id)) {
+    postTagsMap.set(pt.post_id, []);
+  }
+  postTagsMap.get(pt.post_id).push(pt.tags);
+});
+
 // Transform posts to match expected format
 const sortedPosts = (categoryPosts || []).map(post => ({
   slug: post.slug,
@@ -44,7 +71,7 @@ const sortedPosts = (categoryPosts || []).map(post => ({
     description: post.description,
     pubDate: new Date(post.published_at || post.created_at),
     heroImage: post.hero_image,
-    tags: [], // TODO: Implement tags from post_tags table
+    tags: postTagsMap.get(post.id) || [], // Now populated with actual tags from database
     draft: post.is_draft
   }
 }));

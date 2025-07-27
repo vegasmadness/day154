@@ -172,8 +172,8 @@ import AuthGuard from '../../../components/AuthGuard.astro';
                   
                   <!-- Schedule Date/Time (shown when scheduled is selected) -->
                   <div id="schedule-section" class="hidden mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">Publish Date & Time</label>
-                    <input type="datetime-local" id="scheduled_date" name="scheduled_date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="scheduled_at" class="block text-sm font-medium text-gray-700 mb-2">Publish Date & Time</label>
+                    <input type="datetime-local" id="scheduled_at" name="scheduled_at" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                     <p class="text-xs text-gray-500 mt-1">The post will be automatically published at this time</p>
                   </div>
                 </div>
@@ -745,8 +745,8 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       if (postData.post_status === 'published') {
         publishedAt = new Date().toISOString();
         isDraft = false;
-      } else if (postData.post_status === 'scheduled' && postData.scheduled_date) {
-        publishedAt = new Date(postData.scheduled_date).toISOString();
+      } else if (postData.post_status === 'scheduled' && postData.scheduled_at) {
+        publishedAt = new Date(postData.scheduled_at).toISOString();
         isDraft = false;
       }
       
@@ -758,7 +758,7 @@ import AuthGuard from '../../../components/AuthGuard.astro';
         hero_image: postData.featured_image || null,
         is_draft: isDraft,
         published_at: publishedAt,
-        scheduled_at: postData.post_status === 'scheduled' ? publishedAt : null,
+        scheduled_at: postData.post_status === 'scheduled' ? postData.scheduled_at : null,
         author_id: user.id
       };
 
@@ -789,9 +789,14 @@ import AuthGuard from '../../../components/AuthGuard.astro';
           if (existingTag) {
             tagId = existingTag.id;
           } else {
+            // Generate slug for the tag
+            const tagSlug = tagName.toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '');
+            
             const { data: newTag, error: tagError } = await supabase
               .from('tags')
-              .insert([{ name: tagName }])
+              .insert([{ name: tagName, slug: tagSlug }])
               .select('id')
               .single();
             
@@ -822,7 +827,7 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       if (postData.post_status === 'published') {
         successMessage = 'Post published successfully!';
       } else if (postData.post_status === 'scheduled') {
-        const scheduleDate = new Date(postData.scheduled_date).toLocaleString();
+        const scheduleDate = new Date(postData.scheduled_at).toLocaleString();
         successMessage = `Post scheduled for ${scheduleDate} successfully!`;
       }
       
@@ -843,7 +848,7 @@ import AuthGuard from '../../../components/AuthGuard.astro';
     const form = document.getElementById('post-form') as HTMLFormElement;
     const formData = new FormData(form);
     const postStatus = document.querySelector('input[name="post_status"]:checked') as HTMLInputElement;
-    const scheduledDate = document.getElementById('scheduled_date') as HTMLInputElement;
+    const scheduledDate = document.getElementById('scheduled_at') as HTMLInputElement;
     
     return {
       title: formData.get('title') as string,
@@ -854,7 +859,7 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       categories: getSelectedCategories(),
       featured_image: formData.get('featured_image') as string,
       post_status: postStatus?.value || 'draft',
-      scheduled_date: scheduledDate?.value || null,
+      scheduled_at: scheduledDate?.value || null,
       published: postStatus?.value === 'published'
     };
   }
@@ -927,7 +932,7 @@ import AuthGuard from '../../../components/AuthGuard.astro';
     // Handle publishing workflow radio buttons
     const statusRadios = document.querySelectorAll('input[name="post_status"]');
     const scheduleSection = document.getElementById('schedule-section');
-    const scheduledDateInput = document.getElementById('scheduled_date') as HTMLInputElement;
+    const scheduledDateInput = document.getElementById('scheduled_at') as HTMLInputElement;
     
     statusRadios.forEach(radio => {
       radio.addEventListener('change', (e) => {
@@ -1127,12 +1132,12 @@ import AuthGuard from '../../../components/AuthGuard.astro';
       
       // Additional validation for scheduled posts
       if (data.post_status === 'scheduled') {
-        if (!data.scheduled_date) {
+        if (!data.scheduled_at) {
           showError('Please select a date and time for scheduling');
           return;
         }
         
-        const scheduledDate = new Date(data.scheduled_date);
+        const scheduledDate = new Date(data.scheduled_at);
         const now = new Date();
         
         if (scheduledDate <= now) {

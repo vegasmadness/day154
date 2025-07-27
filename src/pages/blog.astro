@@ -50,7 +50,7 @@ const sortedPosts = (allPosts || []).map(post => ({
     description: post.description,
     pubDate: new Date(post.published_at || post.created_at),
     heroImage: post.hero_image,
-    tags: postTagsMap.get(post.id) || [], // Now populated with actual tags from database
+    tags: (postTagsMap.get(post.id) || []).map(tag => ({ name: tag.name, slug: tag.slug })), // Now populated with actual tags from database
     draft: post.is_draft
   }
 }));

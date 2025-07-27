@@ -18,7 +18,7 @@ export const prerender = false;
               <p class="mt-1 text-sm text-gray-500">Update your blog post</p>
             </div>
             <div class="flex items-center space-x-3">
-              <a href="/admin/posts" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              <a href="/admin/posts" class="inline-flex items-center px-4 py-2 border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                 <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -231,8 +231,8 @@ export const prerender = false;
                   
                   <!-- Schedule Date/Time (shown when scheduled is selected) -->
                   <div id="schedule-section" class="hidden mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">Publish Date & Time</label>
-                    <input type="datetime-local" id="scheduled_date" name="scheduled_date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="scheduled_at" class="block text-sm font-medium text-gray-700 mb-2">Publish Date & Time</label>
+                    <input type="datetime-local" id="scheduled_at" name="scheduled_at" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                     <p class="text-xs text-gray-500 mt-1">The post will be automatically published at this time</p>
                   </div>
                   
@@ -716,7 +716,7 @@ export const prerender = false;
     
     orderedCategories.forEach(category => {
        const choiceChip = document.createElement('div');
-       choiceChip.className = 'choice-chip inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors';
+       choiceChip.className = 'choice-chip inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium border=none cursor-pointer transition-colors';
        choiceChip.dataset.categoryId = category.id;
        choiceChip.dataset.categoryColor = category.color;
        choiceChip.textContent = category.name;
@@ -815,14 +815,14 @@ export const prerender = false;
     
     // Set publishing status
     const isDraft = post.is_draft;
-    const isScheduled = post.scheduled_date && new Date(post.scheduled_date) > new Date();
+    const isScheduled = post.scheduled_at && new Date(post.scheduled_at) > new Date();
     
     if (isDraft && !isScheduled) {
       (document.getElementById('draft') as HTMLInputElement).checked = true;
     } else if (isScheduled) {
       (document.getElementById('scheduled') as HTMLInputElement).checked = true;
-      (document.getElementById('scheduled_date') as HTMLInputElement).value = 
-        post.scheduled_date ? new Date(post.scheduled_date).toISOString().slice(0, 16) : '';
+      (document.getElementById('scheduled_at') as HTMLInputElement).value = 
+        post.scheduled_at ? new Date(post.scheduled_at).toISOString().slice(0, 16) : '';
       document.getElementById('schedule-section')?.classList.remove('hidden');
     } else {
       (document.getElementById('published') as HTMLInputElement).checked = true;
@@ -856,7 +856,7 @@ export const prerender = false;
     if (authorName) authorName.textContent = post.profiles?.full_name || post.profiles?.email || 'Unknown';
     
     if (postStatus) {
-      const isScheduled = post.scheduled_date && new Date(post.scheduled_date) > new Date();
+      const isScheduled = post.scheduled_at && new Date(post.scheduled_at) > new Date();
       let statusText, statusClass;
       
       if (!post.is_draft && !isScheduled) {
@@ -879,14 +879,14 @@ export const prerender = false;
     const statusTimestamp = document.getElementById('status-timestamp');
     
     if (currentStatusBadge) {
-      const isScheduled = post.scheduled_date && new Date(post.scheduled_date) > new Date();
+      const isScheduled = post.scheduled_at && new Date(post.scheduled_at) > new Date();
       let statusText, statusClass;
       
       if (!post.is_draft && !isScheduled) {
         statusText = 'Published';
         statusClass = 'bg-green-100 text-green-800';
       } else if (isScheduled) {
-        statusText = `Scheduled for ${formatDate(post.scheduled_date)}`;
+        statusText = `Scheduled for ${formatDate(post.scheduled_at)}`;
         statusClass = 'bg-blue-100 text-blue-800';
       } else {
         statusText = 'Draft';
@@ -925,28 +925,36 @@ export const prerender = false;
 
       // Prepare post data
       const now = new Date().toISOString();
+      let publishedAt = currentPost?.published_at;
+      let isDraft = postData.is_draft;
+      let scheduledAt = null;
+      
+      if (postData.post_status === 'published') {
+        publishedAt = publishedAt || now;
+        isDraft = false;
+      } else if (postData.post_status === 'scheduled' && postData.scheduled_at) {
+        const scheduledTime = new Date(postData.scheduled_at);
+        if (scheduledTime <= new Date()) {
+          // If scheduled time is in the past, publish immediately
+          publishedAt = now;
+          isDraft = false;
+        } else {
+          scheduledAt = scheduledTime.toISOString();
+          isDraft = false;
+        }
+      }
+      
       const post = {
         title: postData.title,
         slug: postData.slug || generateSlug(postData.title),
         content: postData.content,
         description: postData.excerpt || null,
         hero_image: postData.featured_image || null,
-        is_draft: postData.is_draft,
-        scheduled_date: postData.scheduled_date || null,
-        published_at: postData.published && !currentPost?.published_at ? now : currentPost?.published_at,
+        is_draft: isDraft,
+        scheduled_at: scheduledAt,
+        published_at: publishedAt,
         updated_at: now
       };
-      
-      // Handle scheduled publishing
-      if (postData.post_status === 'scheduled' && postData.scheduled_date) {
-        const scheduledTime = new Date(postData.scheduled_date);
-        if (scheduledTime <= new Date()) {
-          // If scheduled time is in the past, publish immediately
-          post.is_draft = false;
-          post.published_at = now;
-          post.scheduled_date = null;
-        }
-      }
 
       // Update the post
       const { error: postError } = await supabase
@@ -980,9 +988,14 @@ export const prerender = false;
           if (existingTag) {
             tagId = existingTag.id;
           } else {
+            // Generate slug for the tag
+            const tagSlug = tagName.toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '');
+            
             const { data: newTag, error: tagError } = await supabase
               .from('tags')
-              .insert([{ name: tagName }])
+              .insert([{ name: tagName, slug: tagSlug }])
               .select('id')
               .single();
             
@@ -1079,7 +1092,7 @@ export const prerender = false;
     
     // Get selected publishing status
     const postStatus = document.querySelector('input[name="post_status"]:checked') as HTMLInputElement;
-    const scheduledDate = (document.getElementById('scheduled_date') as HTMLInputElement)?.value;
+    const scheduledDate = (document.getElementById('scheduled_at') as HTMLInputElement)?.value;
     
     const status = postStatus?.value || 'draft';
     const isDraft = status === 'draft';
@@ -1095,7 +1108,7 @@ export const prerender = false;
       featured_image: formData.get('featured_image') as string,
       published: isPublished,
       is_draft: isDraft || isScheduled,
-      scheduled_date: isScheduled ? scheduledDate : null,
+      scheduled_at: isScheduled ? scheduledDate : null,
       post_status: status,
       categories: getSelectedCategories()
     };
