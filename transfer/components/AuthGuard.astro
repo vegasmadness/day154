@@ -1,0 +1,36 @@
+---
+// Server-side authentication is now handled by middleware
+// This component provides additional client-side auth state management
+---
+
+<!-- Admin authentication guard - server-side protected -->
+<slot />
+
+<script>
+  import { supabaseBrowser } from '../utils/supabase-browser';
+
+  // Listen for auth state changes and handle client-side updates
+  supabaseBrowser.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || !session) {
+      // User signed out, redirect to login
+      window.location.href = '/admin';
+    }
+    // Note: SIGNED_IN events are handled by middleware to prevent conflicts
+    // The middleware will redirect authenticated admin users appropriately
+  });
+
+  // Optional: Add visual feedback for auth state
+  async function updateAuthUI() {
+    try {
+      const { data: { user } } = await supabaseBrowser.auth.getUser();
+      if (user) {
+        console.log('Authenticated admin user:', user.email);
+      }
+    } catch (error) {
+      console.error('Auth UI update error:', error);
+    }
+  }
+
+  // Update UI when component loads
+  document.addEventListener('DOMContentLoaded', updateAuthUI);
+</script>
