@@ -170,10 +170,45 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       if (data?.user) {
         showSuccess();
-        // Redirect to admin dashboard after successful login
-        setTimeout(() => {
-          window.location.href = '/admin/dashboard';
-        }, 1000);
+        
+        // Wait for session to be properly established before redirecting
+        // Check session multiple times to ensure it's available
+        let sessionConfirmed = false;
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const checkSession = async () => {
+          try {
+            const { supabaseBrowser } = await import('../../utils/supabase-browser');
+            const { data: { session }, error: sessionError } = await supabaseBrowser.auth.getSession();
+            
+            if (session && session.user && !sessionError) {
+              console.log('Session confirmed, redirecting to dashboard');
+              sessionConfirmed = true;
+              window.location.href = '/admin/dashboard';
+              return;
+            }
+            
+            attempts++;
+            if (attempts < maxAttempts) {
+              setTimeout(checkSession, 200);
+            } else {
+              console.log('Session check timeout, redirecting anyway');
+              window.location.href = '/admin/dashboard';
+            }
+          } catch (err) {
+            console.error('Session check error:', err);
+            attempts++;
+            if (attempts < maxAttempts) {
+              setTimeout(checkSession, 200);
+            } else {
+              window.location.href = '/admin/dashboard';
+            }
+          }
+        };
+        
+        // Start checking session after a brief delay
+        setTimeout(checkSession, 300);
       }
     } catch (error) {
       console.error('Login error:', error);

@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabaseBrowser } from './supabase-browser';
 import type { User, Session } from '@supabase/supabase-js';
 
 // Auth state management
@@ -10,7 +10,7 @@ export interface AuthState {
 
 // Sign up with email and password
 export async function signUp(email: string, password: string, fullName?: string) {
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabaseBrowser.auth.signUp({
     email,
     password,
     options: {
@@ -25,7 +25,7 @@ export async function signUp(email: string, password: string, fullName?: string)
 
 // Sign in with email and password
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabaseBrowser.auth.signInWithPassword({
     email,
     password,
   });
@@ -35,25 +35,25 @@ export async function signIn(email: string, password: string) {
 
 // Sign out
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabaseBrowser.auth.signOut();
   return { error };
 }
 
 // Get current user
 export async function getCurrentUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabaseBrowser.auth.getUser();
   return { user, error };
 }
 
 // Get current session
 export async function getCurrentSession() {
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const { data: { session }, error } = await supabaseBrowser.auth.getSession();
   return { session, error };
 }
 
 // Reset password
 export async function resetPassword(email: string) {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { data, error } = await supabaseBrowser.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/auth/reset-password`,
   });
 
@@ -62,7 +62,7 @@ export async function resetPassword(email: string) {
 
 // Update password
 export async function updatePassword(password: string) {
-  const { data, error } = await supabase.auth.updateUser({
+  const { data, error } = await supabaseBrowser.auth.updateUser({
     password,
   });
 
@@ -74,7 +74,7 @@ export async function updateProfile(updates: {
   full_name?: string;
   avatar_url?: string;
 }) {
-  const { data, error } = await supabase.auth.updateUser({
+  const { data, error } = await supabaseBrowser.auth.updateUser({
     data: updates,
   });
 
@@ -96,5 +96,5 @@ export function isAdmin(user: User | null): boolean {
 
 // Auth event listener helper
 export function onAuthStateChange(callback: (event: string, session: Session | null) => void) {
-  return supabase.auth.onAuthStateChange(callback);
+  return supabaseBrowser.auth.onAuthStateChange(callback);
 }

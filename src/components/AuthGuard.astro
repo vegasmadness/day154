@@ -7,16 +7,44 @@
 <slot />
 
 <script>
-  import { supabase } from '../utils/supabase';
+  import { supabaseBrowser } from '../utils/supabase-browser';
 
   async function checkAuth() {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabaseBrowser.auth.getUser();
       
-      if (error || !user) {
-        // Add a small delay to prevent immediate redirect loops
+      if (error) {
+        console.error('Auth error:', error.message);
         setTimeout(() => {
           window.location.href = '/admin';
+        }, 100);
+        return;
+      }
+      
+      if (!user) {
+        console.log('No user session found');
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 100);
+        return;
+      }
+      
+      // Check if user has admin role
+      const userRole = user.user_metadata?.role;
+      const appRole = user.app_metadata?.role;
+      const isAdmin = userRole === 'admin' || appRole === 'admin';
+      
+      console.log('User auth check:', {
+        email: user.email,
+        userRole,
+        appRole,
+        isAdmin
+      });
+      
+      if (!isAdmin) {
+        console.log('User is not admin, redirecting');
+        setTimeout(() => {
+          window.location.href = '/?error=unauthorized';
         }, 100);
         return;
       }
@@ -24,25 +52,27 @@
       console.log('Authenticated admin user:', user.email);
     } catch (error) {
       console.error('Auth check error:', error);
-      // Add delay for error case too
       setTimeout(() => {
         window.location.href = '/admin';
       }, 100);
     }
   }
 
-  // Add a small delay before running auth check to let page settle
+  // Wait for page to fully load before checking auth
   document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(checkAuth, 200);
+    // Add a longer delay to ensure session is properly established
+    setTimeout(checkAuth, 500);
   });
 
   // Listen for auth state changes
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_OUT' || !session) {
-      // Only redirect on explicit sign out, not on initial load
-      if (event === 'SIGNED_OUT') {
-        window.location.href = '/admin';
-      }
+  supabaseBrowser.auth.onAuthStateChange((event, session) => {
+    console.log('Auth state change in AuthGuard:', event, session?.user?.email);
+    
+    if (event === 'SIGNED_OUT') {
+      window.location.href = '/admin';
+    } else if (event === 'SIGNED_IN' && session?.user) {
+      // Re-check auth when user signs in to validate admin role
+      setTimeout(checkAuth, 100);
     }
   });
 </script>

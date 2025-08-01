@@ -1,6 +1,6 @@
 import { atom } from 'nanostores';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../utils/supabase';
+import { supabaseBrowser } from '../utils/supabase-browser';
 import type { AuthState } from '../utils/auth';
 
 // Auth state store
@@ -14,7 +14,7 @@ export const authStore = atom<AuthState>({
 export async function initAuth() {
   try {
     // Get initial session
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabaseBrowser.auth.getSession();
     
     if (error) {
       console.error('Error getting session:', error);
@@ -27,7 +27,7 @@ export async function initAuth() {
     });
 
     // Listen for auth changes
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabaseBrowser.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
       
       authStore.set({
