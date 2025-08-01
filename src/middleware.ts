@@ -73,9 +73,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   );
 
-  // Get the current session
-  const { data: { session }, error } = await supabase.auth.getSession();
-  const user = session?.user || null;
+  // Get the authenticated user (secure method)
+  const { data: { user }, error } = await supabase.auth.getUser();
+  
+  if (error) {
+    console.error('Auth error:', error.message);
+  }
 
   // Check if current route is protected
   const isProtectedRoute = PROTECTED_ROUTES.some(route => {
