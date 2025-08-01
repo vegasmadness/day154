@@ -14,25 +14,35 @@
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error || !user) {
-        // If no user or error, redirect to admin login
-        window.location.href = '/admin';
+        // Add a small delay to prevent immediate redirect loops
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 100);
         return;
       }
       
       console.log('Authenticated admin user:', user.email);
     } catch (error) {
       console.error('Auth check error:', error);
-      window.location.href = '/admin';
+      // Add delay for error case too
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 100);
     }
   }
 
-  // Run auth check when component loads
-  document.addEventListener('DOMContentLoaded', checkAuth);
+  // Add a small delay before running auth check to let page settle
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(checkAuth, 200);
+  });
 
   // Listen for auth state changes
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT' || !session) {
-      window.location.href = '/admin';
+      // Only redirect on explicit sign out, not on initial load
+      if (event === 'SIGNED_OUT') {
+        window.location.href = '/admin';
+      }
     }
   });
 </script>

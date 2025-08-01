@@ -1,20 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCurrentUser } from '../../utils/auth';
-
-// Check if user is already authenticated
-let user = null;
-try {
-  const { user: currentUser } = await getCurrentUser();
-  user = currentUser;
-} catch (error) {
-  console.error('Error fetching user:', error);
-}
-
-// If user is authenticated, redirect to dashboard
-if (user) {
-  return Astro.redirect('/admin/dashboard');
-}
+// Remove server-side auth check to prevent redirect loops
+// The middleware will handle authenticated user redirects
 ---
 
 <BaseLayout title="Admin Login">
